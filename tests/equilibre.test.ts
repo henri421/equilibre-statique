@@ -58,6 +58,12 @@ describe('mur poids sous poussee', () => {
     expect(droite.taux).toBeCloseTo(49.5 / 32.4, 12);
     const p = droite.lignes.find((l) => l.elementaire.origine.startsWith('poussee'))!;
     expect([p.dx, p.dz, p.M, p.role, p.gamma]).toEqual([-1, 1, -45, 'destabilisant', 1.1]);
+    // Ligne verifiable a la main : F = 45 kN, d = 1 m, gamma_f = 1,1 -> 49,5 kN.m.
+    expect([p.F, p.d]).toEqual([45, 1]);
+    expect(p.Md).toBeCloseTo(p.F * (p.d ?? 0) * p.gamma, 12);
+    const w = droite.lignes.find((l) => l.elementaire.origine === 'poids de mur')!;
+    // Poids : F = 72 kN, d = 0,5 m, gamma_f = 0,9 -> 32,4 kN.m.
+    expect([w.F, w.d, w.gamma, w.role]).toEqual([72, 0.5, 0.9, 'stabilisant']);
   });
 
   it('arete gauche : tout est stabilisant', () => {

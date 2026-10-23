@@ -490,10 +490,10 @@ footer {
   font-size: 0.72rem;
 }
 
-/* L'editeur d'actions est un tableau : la colonne de saisie est plus large
-   que dans les autres outils de la suite. */
+/* Les tableaux de moments ont sept colonnes : la colonne des resultats est
+   la plus large, la saisie se contente de 30 rem. */
 main {
-  grid-template-columns: minmax(22rem, 40rem) 1fr;
+  grid-template-columns: minmax(20rem, 30rem) minmax(0, 1fr);
 }
 
 @media (max-width: 60rem) {
@@ -573,3 +573,7 @@ td.ok { color: var(--ok); }
 td.refus { color: var(--refus); font-weight: 600; }
 tr.destabilisant td:first-child { border-left: 3px solid var(--traction); }
 tr.stabilisant td:first-child { border-left: 3px solid var(--compression); }
+
+.moments tfoot td { border-top: 2px solid var(--texte); font-weight: 600; }
+.moments th { white-space: normal; vertical-align: bottom; }
+.moments td:first-child { min-width: 9rem; }

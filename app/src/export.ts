@@ -54,6 +54,7 @@ export function noteDeCalculHtml(r: ResultatEquilibre, profil: ProfilEquilibre, 
   td.valeur { font-family: var(--mono); text-align: right; white-space: nowrap; }
   td.ok { color: var(--ok); } td.refus { color: var(--refus); font-weight: 600; }
   tr.destabilisant td:first-child { border-left: 3px solid var(--traction); }
+  tfoot td { border-top: 2px solid var(--texte); font-weight: 600; }
   .verdict { font-weight: 600; padding: .4rem .6rem; border-left: 3px solid; }
   .verdict-conforme { color: var(--ok); background: var(--ok-fond); }
   .verdict-non-conforme { color: var(--refus); background: var(--refus-fond); }

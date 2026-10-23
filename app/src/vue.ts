@@ -57,22 +57,43 @@ export function texteExcentricite(r: ResultatEquilibre): string {
 }
 
 /** Le detail des moments autour d'une arete : bras de levier, role, coefficient. */
+/** Sens de la charge en une fleche : →, ←, ↓, ↑, ou oblique. */
+function sens(Fx: number, Fz: number): string {
+  if (Fz === 0) return Fx > 0 ? '→' : '←';
+  if (Fx === 0) return Fz < 0 ? '↓' : '↑';
+  return `${Fx > 0 ? '→' : '←'}${Fz < 0 ? '↓' : '↑'}`;
+}
+
+/**
+ * Le detail du renversement autour d'une arete, ligne par ligne :
+ * charge F, distance d du pivot a sa ligne d'action, coefficient gamma_f,
+ * moment de calcul F d gamma_f range en stabilisant ou destabilisant ; les
+ * sommes en pied. Chaque ligne se recalcule a la main.
+ */
 export function tableauMoments(x: Renversement): string {
   const lignes = x.lignes
     .map((l) => {
       const e = l.elementaire;
-      const effort = e.C !== 0 ? `couple ${f(e.C)} kN.m` : `F_x ${f(e.Fx)} ; F_z ${f(-e.Fz)} vers le bas`;
+      const charge = e.C !== 0 ? `couple ${f(Math.abs(e.C))} kN.m` : `${f(l.F)} ${sens(e.Fx, e.Fz)}`;
+      const stb = l.role === 'stabilisant' ? f(l.Md) : '';
+      const dst = l.role === 'destabilisant' ? f(l.Md) : '';
       return (
-        `<tr class="${l.role}"><td>${echapper(e.origine)}</td><td>${e.nature}</td><td>${effort}</td>` +
-        `<td class="valeur">${e.C !== 0 ? '—' : `${f(l.dx)} ; ${f(l.dz)}`}</td><td class="valeur">${f(l.M)}</td>` +
-        `<td>${l.role}</td><td class="valeur">${f(l.gamma)}</td><td class="valeur">${f(l.Md)}</td></tr>`
+        `<tr class="${l.role}"><td>${echapper(e.origine)}</td><td>${e.nature}</td><td class="valeur">${charge}</td>` +
+        `<td class="valeur">${l.d === null ? '—' : f(l.d, 3)}</td><td class="valeur">${f(l.gamma)}</td>` +
+        `<td class="valeur">${stb}</td><td class="valeur">${dst}</td></tr>`
       );
     })
     .join('');
+  const somme =
+    `<tr class="somme"><td colspan="5">Somme</td><td class="valeur">${f(x.M_stb_d)}</td><td class="valeur">${f(x.M_dst_d)}</td></tr>` +
+    `<tr class="somme"><td colspan="5">Taux = somme destabilisante / somme stabilisante</td><td colspan="2" class="valeur ${x.taux <= 1 ? 'ok' : 'refus'}">` +
+    `${Number.isFinite(x.taux) ? tauxFr(x.taux) : 'infini'}</td></tr>`;
   return (
-    `<h3>Moments autour de l arete ${x.pivot} (x = ${f(x.x)} m, z = ${f(x.z)} m)</h3>` +
-    '<div class="defilement"><table class="zones"><thead><tr><th>Action</th><th>G/Q</th><th>Effort (kN)</th><th>Bras dx ; dz (m)</th>' +
-    `<th>M (kN.m)</th><th>Role</th><th>gamma</th><th>M_d (kN.m)</th></tr></thead><tbody>${lignes}</tbody></table></div>`
+    `<h3>Renversement autour de l arete ${x.pivot} (x = ${f(x.x)} m, z = ${f(x.z)} m)</h3>` +
+    '<div class="defilement"><table class="zones moments"><thead><tr><th>Charge</th><th>G/Q</th><th>F<br>(kN)</th><th>Distance d<br>(m)</th>' +
+    '<th>&gamma;<sub>f</sub></th><th>M stabilisant<br>(kN.m)</th><th>M destabilisant<br>(kN.m)</th></tr></thead>' +
+    `<tbody>${lignes}</tbody><tfoot>${somme}</tfoot></table></div>` +
+    '<p class="note">M = F × d × &gamma;<sub>f</sub> ; d est la distance du pivot a la ligne d action de la charge.</p>'
   );
 }
 
@@ -107,12 +128,24 @@ export function lignesCsv(r: ResultatEquilibre): string[][] {
   lignes.push([`Glissement vers ${r.glissement.sens > 0 ? '+x' : '-x'}`, f(r.glissement.H_d), f(r.glissement.R_d), t(r.glissement.taux)]);
   lignes.push(['Soulevement', f(r.soulevement.V_dst_d), f(r.soulevement.V_stb_d), t(r.soulevement.taux)]);
   lignes.push([]);
-  lignes.push(['Arete', 'Action', 'G/Q', 'F_x (kN)', 'F_z bas (kN)', 'couple (kN.m)', 'dx (m)', 'dz (m)', 'M (kN.m)', 'role', 'gamma', 'M_d (kN.m)']);
   for (const x of r.renversement) {
+    lignes.push([]);
+    lignes.push([`Renversement autour de l arete ${x.pivot}`]);
+    lignes.push(['Charge', 'G/Q', 'F (kN)', 'couple (kN.m)', 'Distance d (m)', 'gamma_f', 'M stabilisant (kN.m)', 'M destabilisant (kN.m)']);
     for (const l of x.lignes) {
       const e = l.elementaire;
-      lignes.push([x.pivot, e.origine, e.nature, f(e.Fx), f(-e.Fz), f(e.C), f(l.dx), f(l.dz), f(l.M), l.role, f(l.gamma), f(l.Md)]);
+      lignes.push([
+        e.origine,
+        e.nature,
+        e.C !== 0 ? '' : f(l.F),
+        e.C !== 0 ? f(Math.abs(e.C)) : '',
+        l.d === null ? '' : f(l.d, 3),
+        f(l.gamma),
+        l.role === 'stabilisant' ? f(l.Md) : '',
+        l.role === 'destabilisant' ? f(l.Md) : '',
+      ]);
     }
+    lignes.push(['Somme', '', '', '', '', '', f(x.M_stb_d), f(x.M_dst_d)]);
   }
   return lignes;
 }

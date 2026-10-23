@@ -91,6 +91,13 @@ export interface LigneMoment {
   /** Bras de levier par rapport au pivot (m). */
   dx: number;
   dz: number;
+  /** Intensite de la charge (kN) ; 0 pour un couple. */
+  F: number;
+  /**
+   * Distance du pivot a la ligne d'action de la charge (m) : |M| / F, le bras
+   * de levier proprement dit. null pour un couple, sans bras de levier.
+   */
+  d: number | null;
   /** Moment caracteristique autour du pivot, signe (kN.m). */
   M: number;
   role: 'destabilisant' | 'stabilisant' | 'nul';
@@ -228,7 +235,9 @@ function renverser(el: Elementaire[], pivot: 'gauche' | 'droite', b: Base, j: Je
     const M = e.C !== 0 ? e.C : dx * e.Fz - dz * e.Fx;
     const role = Math.abs(M) < 1e-12 ? 'nul' : sens * M > 0 ? 'destabilisant' : 'stabilisant';
     const gamma = role === 'nul' ? 0 : coefficient(j, e.nature, role === 'destabilisant');
-    return { elementaire: e, dx, dz, M, role, gamma, Md: gamma * Math.abs(M) };
+    const F = e.C !== 0 ? 0 : Math.hypot(e.Fx, e.Fz);
+    const d = e.C !== 0 ? null : F > 0 ? Math.abs(M) / F : 0;
+    return { elementaire: e, F, d, dx, dz, M, role, gamma, Md: gamma * Math.abs(M) };
   });
   const M_dst_d = lignes.filter((l) => l.role === 'destabilisant').reduce((s, l) => s + l.Md, 0);
   const M_stb_d = lignes.filter((l) => l.role === 'stabilisant').reduce((s, l) => s + l.Md, 0);
