@@ -513,6 +513,7 @@ main {
 
 .ligne-charge .tete {
   display: flex;
+  flex-wrap: wrap;
   gap: 0.4rem;
   align-items: center;
 }
@@ -577,3 +578,24 @@ tr.stabilisant td:first-child { border-left: 3px solid var(--compression); }
 .moments tfoot td { border-top: 2px solid var(--texte); font-weight: 600; }
 .moments th { white-space: normal; vertical-align: bottom; }
 .moments td:first-child { min-width: 9rem; }
+
+/* Une liste aux options longues ne sort pas de son cadre. */
+select {
+  max-width: 60%;
+}
+
+/* Sur un telephone, les intitules et valeurs longs passent a la ligne plutot
+   que d'elargir la page. */
+@media (max-width: 40rem) {
+  table.grandeurs th,
+  table.grandeurs td.valeur {
+    width: auto;
+    white-space: normal;
+  }
+}
+
+/* Un fieldset s'elargit par defaut a son contenu : sans ceci, le tableau des
+   segments elargirait la page au lieu de defiler dans son cadre. */
+fieldset {
+  min-width: 0;
+}
