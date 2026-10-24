@@ -11,7 +11,7 @@
   <body>
     <nav class="barre" aria-label="suite d'outils">
       <div class="barre-corps">
-        <span class="barre-nom">Aedificium &middot; Equilibre</span>
+        <span class="barre-nom">Aedificium &middot; Équilibre</span>
         <a class="barre-lien" href="https://henri421.github.io/WebAedificium/" target="_blank" rel="noopener">Suite Aedificium &#8599;</a>
       </div>
     </nav>
@@ -19,13 +19,13 @@
     <header>
       <h1>equilibre-statique</h1>
       <p class="sous-titre">
-        Equilibre statique d'un element plan a l'ELU : bras de levier, actions stabilisantes et destabilisantes,
-        renversement (EQU), glissement, soulevement (UPL) et position de la resultante sur la base.
+        Équilibre statique d'un élément plan à l'ELU : bras de levier, actions stabilisantes et déstabilisantes,
+        renversement (EQU), glissement, soulèvement (UPL) et position de la résultante sur la base.
       </p>
       <p class="avertissement">
-        Aide au calcul : l'outil constate, il ne prescrit pas. Coefficients recommandes de l'EN 1990 et de l'EN 1997-1 ;
-        l'annexe nationale peut les modifier. Seul l'equilibre est verifie : ni portance du sol, ni resistance des
-        elements.
+        Aide au calcul : l'outil constate, il ne prescrit pas. Coefficients recommandés de l'EN 1990 et de l'EN 1997-1 ;
+        l'annexe nationale peut les modifier. Seul l'équilibre est vérifié : ni portance du sol, ni résistance des
+        éléments.
       </p>
     </header>
 
@@ -33,39 +33,39 @@
       <section id="saisie" aria-label="saisie">
         <form id="formulaire" autocomplete="off">
           <fieldset>
-            <legend>Exemples et modele</legend>
+            <legend>Exemples et modèle</legend>
             <label><span>Partir d'un exemple</span><select data-role="exemple"></select></label>
             <div class="boutons"><button type="button" data-action="enregistrer">Enregistrer (JSON)</button></div>
-            <label class="large fichier"><span>Ouvrir un modele</span><input type="file" accept="application/json,.json" data-role="ouvrir" /></label>
+            <label class="large fichier"><span>Ouvrir un modèle</span><input type="file" accept="application/json,.json" data-role="ouvrir" /></label>
           </fieldset>
 
           <fieldset>
             <legend>Segments pesants</legend>
-            <p class="note">Axe de (x<sub>1</sub> ; z<sub>1</sub>) a (x<sub>2</sub> ; z<sub>2</sub>) en m, z vers le haut ; epaisseur e perpendiculaire a l'axe ; poids propre calcule.</p>
+            <p class="note">Axe de (x<sub>1</sub> ; z<sub>1</sub>) à (x<sub>2</sub> ; z<sub>2</sub>) en m, z vers le haut ; épaisseur e perpendiculaire à l'axe ; poids propre calculé.</p>
             <div class="defilement" data-role="segments"></div>
             <div class="boutons"><button type="button" data-action="ajouter-segment">+ segment</button></div>
           </fieldset>
 
           <fieldset>
             <legend>Base</legend>
-            <label><span>x<sub>g</sub>, arete gauche (m)</span><input type="text" inputmode="decimal" data-fixe="xg" /></label>
-            <label><span>x<sub>d</sub>, arete droite (m)</span><input type="text" inputmode="decimal" data-fixe="xd" /></label>
+            <label><span>x<sub>g</sub>, arête gauche (m)</span><input type="text" inputmode="decimal" data-fixe="xg" /></label>
+            <label><span>x<sub>d</sub>, arête droite (m)</span><input type="text" inputmode="decimal" data-fixe="xd" /></label>
             <label><span>z<sub>b</sub>, cote de la base (m)</span><input type="text" inputmode="decimal" data-fixe="zb" /></label>
-            <label><span>&mu;<sub>d</sub>, frottement de calcul a la base</span><input type="text" inputmode="decimal" data-fixe="mu" /></label>
+            <label><span>&mu;<sub>d</sub>, frottement de calcul à la base</span><input type="text" inputmode="decimal" data-fixe="mu" /></label>
             <label><span>Profondeur prise en compte (m)</span><input type="text" inputmode="decimal" data-fixe="profondeur" /></label>
           </fieldset>
 
           <fieldset>
             <legend>Charges</legend>
             <p class="note">
-              Verticales positives vers le bas, horizontales vers +x, moments dans le sens trigonometrique. Une charge
-              lineaire va de q<sub>A</sub> en A a q<sub>B</sub> en B, par metre de longueur de AB : uniforme, triangulaire
-              ou trapezoidale.
+              Verticales positives vers le bas, horizontales vers +x, moments dans le sens trigonométrique. Une charge
+              linéaire va de q<sub>A</sub> en A à q<sub>B</sub> en B, par mètre de longueur de AB : uniforme, triangulaire
+              ou trapézoïdale.
             </p>
             <div data-role="charges"></div>
             <div class="boutons">
               <button type="button" data-action="ajouter-ponctuelle">+ ponctuelle</button>
-              <button type="button" data-action="ajouter-lineaire">+ repartie / triangulaire / trapezoidale</button>
+              <button type="button" data-action="ajouter-lineaire">+ répartie / triangulaire / trapézoïdale</button>
               <button type="button" data-action="ajouter-moment">+ moment</button>
             </div>
           </fieldset>
@@ -75,25 +75,25 @@
 
       <div class="colonne">
         <section aria-label="schema">
-          <h2>Schema</h2>
+          <h2>Schéma</h2>
           <div data-role="schema" class="schema"></div>
-          <p class="note">Fleches pleines : actions permanentes ; tiretees : variables ; point bleu : resultante caracteristique sur la base.</p>
+          <p class="note">Flèches pleines : actions permanentes ; tiretées : variables ; point bleu : résultante caractéristique sur la base.</p>
         </section>
         <section aria-label="verifications">
-          <h2>Verifications</h2>
+          <h2>Vérifications</h2>
           <div data-role="resultat"></div>
         </section>
         <section aria-label="coefficients">
           <h2>Coefficients partiels</h2>
           <div data-role="profil"></div>
-          <h3>Hypotheses</h3>
+          <h3>Hypothèses</h3>
           <ul class="note" data-role="hypotheses"></ul>
         </section>
         <section id="sorties" aria-label="sorties">
           <h2>Sorties</h2>
           <div class="boutons">
-            <button type="button" data-action="exporter-schema">Schema (SVG)</button>
-            <button type="button" data-action="exporter-csv">Resultats (CSV)</button>
+            <button type="button" data-action="exporter-schema">Schéma (SVG)</button>
+            <button type="button" data-action="exporter-csv">Résultats (CSV)</button>
             <button type="button" data-action="exporter-note">Note de calcul (HTML imprimable)</button>
           </div>
         </section>
@@ -101,7 +101,7 @@
     </main>
 
     <footer>
-      <p>Partie de la suite <a href="https://henri421.github.io/WebAedificium/">Aedificium</a>. Calcul entierement local.</p>
+      <p>Partie de la suite <a href="https://henri421.github.io/WebAedificium/">Aedificium</a>. Calcul entièrement local.</p>
     </footer>
 
     <script type="module" src="./src/main.ts"></script>

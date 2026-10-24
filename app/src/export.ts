@@ -27,22 +27,22 @@ export function resultatEnCsv(r: ResultatEquilibre): string {
 }
 
 export const HYPOTHESES = [
-  'Repere : x vers la droite, z vers le haut, moments positifs dans le sens trigonometrique. Charges verticales saisies positives vers le bas.',
-  'Chaque segment pesant et chaque charge sont une action distincte, classee stabilisante ou destabilisante selon le signe de son effet ; une charge lineaire est decomposee en deux triangles.',
-  'Renversement : coefficients EQU (EN 1990 tableau A1.2(A)) ; une action variable stabilisante n est pas prise.',
-  'Glissement : coefficients STR/GEO (tableau A1.2(B)) ; frottement de calcul mu_d saisi, coefficients du sol compris (tan delta_d, ou tan delta / gamma_R,h selon l approche).',
-  'Soulevement : coefficients UPL (EN 1997-1 tableau A.15).',
-  'Position de la resultante : toutes actions a leur valeur caracteristique ; indication sans verdict.',
-  'Ni portance du sol, ni resistance des elements : seul l equilibre est verifie.',
+  'Repère : x vers la droite, z vers le haut, moments positifs dans le sens trigonométrique. Charges verticales saisies positives vers le bas.',
+  "Chaque segment pesant et chaque charge sont une action distincte, classée stabilisante ou déstabilisante selon le signe de son effet ; une charge linéaire est décomposée en deux triangles.",
+  "Renversement : coefficients EQU (EN 1990 tableau A1.2(A)) ; une action variable stabilisante n'est pas prise.",
+  "Glissement : coefficients STR/GEO (tableau A1.2(B)) ; frottement de calcul mu_d saisi, coefficients du sol compris (tan delta_d, ou tan delta / gamma_R,h selon l'approche).",
+  'Soulèvement : coefficients UPL (EN 1997-1 tableau A.15).',
+  'Position de la résultante : toutes actions à leur valeur caractéristique ; indication sans verdict.',
+  "Ni portance du sol, ni résistance des éléments : seul l'équilibre est vérifié.",
 ];
 
 const AIDE =
-  "Outil d'aide au calcul : il constate, il ne prescrit pas. Valeurs recommandees de l'EN 1990 et de l'EN 1997-1 ; " +
-  "l'annexe nationale peut les modifier. Cette note est un compte rendu, pas une justification signee.";
+  "Outil d'aide au calcul : il constate, il ne prescrit pas. Valeurs recommandées de l'EN 1990 et de l'EN 1997-1 ; " +
+  "l'annexe nationale peut les modifier. Cette note est un compte rendu, pas une justification signée.";
 
 export function noteDeCalculHtml(r: ResultatEquilibre, profil: ProfilEquilibre, svg: string, entrees: string, date: string): string {
   return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8" /><title>Note de calcul — equilibre statique</title>
+<html lang="fr"><head><meta charset="utf-8" /><title>Note de calcul — équilibre statique</title>
 <style>${STYLES_TRACE}
   body { margin: 0; padding: 24px 28px; background: var(--surface); color: var(--texte); font: 13px/1.5 var(--sans); }
   h1 { font-size: 1.15rem; font-weight: normal; margin: 0 0 .2rem; }
@@ -63,13 +63,13 @@ export function noteDeCalculHtml(r: ResultatEquilibre, profil: ProfilEquilibre, 
   ul { color: var(--texte-doux); font-size: .82rem; }
   .pied { margin-top: 2rem; border-top: 1px solid var(--bordure); color: var(--texte-doux); font-size: .78rem; padding-top: .5rem; }
 </style></head><body>
-<h1>Note de calcul — equilibre statique</h1>
+<h1>Note de calcul — équilibre statique</h1>
 <p class="clause">${notationHtml(date)} · ${notationHtml(profil.nom)}</p>
-<h2>Donnees</h2>${entrees}
+<h2>Données</h2>${entrees}
 <figure>${svg}</figure>
 <h2>Coefficients partiels</h2>${tableauProfil(profil)}
-<h2>Verifications</h2>${rendreResultat(r)}
-<h2>Hypotheses et limites</h2><ul>${HYPOTHESES.map((h) => `<li>${notationHtml(h)}</li>`).join('')}</ul>
+<h2>Vérifications</h2>${rendreResultat(r)}
+<h2>Hypothèses et limites</h2><ul>${HYPOTHESES.map((h) => `<li>${notationHtml(h)}</li>`).join('')}</ul>
 <p class="pied">${AIDE}</p>
 </body></html>`;
 }

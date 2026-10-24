@@ -43,11 +43,11 @@ function jeu(source: string, gG_dst: number, gG_stb: number, gQ_dst: number): Je
 
 export function profilRecommande(): ProfilEquilibre {
   return {
-    nom: 'EN 1990:2002 et EN 1997-1:2004, valeurs recommandees',
+    nom: 'EN 1990:2002 et EN 1997-1:2004, valeurs recommandées',
     date: '2026-10-23',
-    equ: jeu('EN 1990:2002, tableau A1.2(A), valeur recommandee', 1.1, 0.9, 1.5),
-    glissement: jeu('EN 1990:2002, tableau A1.2(B), valeur recommandee', 1.35, 1.0, 1.5),
-    upl: jeu('EN 1997-1:2004, tableau A.15, valeur recommandee', 1.0, 0.9, 1.5),
+    equ: jeu('EN 1990:2002, tableau A1.2(A), valeur recommandée', 1.1, 0.9, 1.5),
+    glissement: jeu('EN 1990:2002, tableau A1.2(B), valeur recommandée', 1.35, 1.0, 1.5),
+    upl: jeu('EN 1997-1:2004, tableau A.15, valeur recommandée', 1.0, 0.9, 1.5),
   };
 }
 
@@ -55,8 +55,8 @@ export function profilRecommande(): ProfilEquilibre {
 export function verifierProfil(p: ProfilEquilibre): void {
   for (const [nom, j] of [['EQU', p.equ], ['glissement', p.glissement], ['UPL', p.upl]] as const) {
     for (const [cle, v] of Object.entries(j) as [string, ValeurSourcee][]) {
-      if (!Number.isFinite(v.valeur) || v.valeur < 0) throw new Error(`Profil : ${cle} (${nom}) n est pas un nombre positif.`);
-      if (v.source.trim() === '') throw new Error(`Profil : ${cle} (${nom}) n a pas de source ; une valeur sans provenance bloque le calcul.`);
+      if (!Number.isFinite(v.valeur) || v.valeur < 0) throw new Error(`Profil : ${cle} (${nom}) n'est pas un nombre positif.`);
+      if (v.source.trim() === '') throw new Error(`Profil : ${cle} (${nom}) n'a pas de source ; une valeur sans provenance bloque le calcul.`);
     }
   }
 }

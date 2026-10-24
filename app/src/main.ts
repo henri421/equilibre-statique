@@ -18,7 +18,7 @@ const CLE_STOCKAGE = 'equilibre-statique/saisie';
 
 function exige<T extends Element>(selecteur: string): T {
   const e = document.querySelector<T>(selecteur);
-  if (e === null) throw new Error(`Element absent de la page : ${selecteur}`);
+  if (e === null) throw new Error(`Élément absent de la page : ${selecteur}`);
   return e;
 }
 
@@ -197,7 +197,7 @@ document.addEventListener('click', (ev) => {
   }
   if (action === 'enregistrer') return telecharger('equilibre-statique.json', serialiser(saisie), 'application/json;charset=utf-8');
   if (!action.startsWith('exporter-')) return;
-  if (dernier === null) return montrerErreur('Aucun calcul valide a exporter : corriger la saisie.');
+  if (dernier === null) return montrerErreur('Aucun calcul valide à exporter : corriger la saisie.');
   if (action === 'exporter-schema') telecharger('equilibre-schema.svg', svgAutonome(dernier.svg, STYLES_TRACE), 'image/svg+xml;charset=utf-8');
   else if (action === 'exporter-csv') telecharger('equilibre-resultats.csv', resultatEnCsv(dernier.resultat), 'text/csv;charset=utf-8');
   else if (action === 'exporter-note') {

@@ -67,7 +67,7 @@ export function schema(d: DonneesEquilibre, r: ResultatEquilibre | null): string
 
   // Base et aretes de basculement.
   parts.push(`<line class="base" x1="${X(d.base.xg)}" y1="${Y(d.base.z)}" x2="${X(d.base.xd)}" y2="${Y(d.base.z)}" />`);
-  for (const [x, nom] of [[d.base.xg, 'arete gauche'], [d.base.xd, 'arete droite']] as const) {
+  for (const [x, nom] of [[d.base.xg, 'arête gauche'], [d.base.xd, 'arête droite']] as const) {
     parts.push(`<circle class="pivot" cx="${X(x)}" cy="${Y(d.base.z)}" r="5" /><text class="etiquette" x="${X(x)}" y="${(Y(d.base.z) + 18).toFixed(1)}" text-anchor="middle">${notationSvg(nom)}</text>`);
   }
 
@@ -124,7 +124,7 @@ export function schema(d: DonneesEquilibre, r: ResultatEquilibre | null): string
   }
 
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${largeur.toFixed(0)} ${hauteur.toFixed(0)}" role="img" aria-label="schema de l element">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${largeur.toFixed(0)} ${hauteur.toFixed(0)}" role="img" aria-label="schéma de l'élément">` +
     '<defs><marker id="pointe" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="pointe" /></marker></defs>' +
     parts.join('') +
     '</svg>'

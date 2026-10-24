@@ -155,12 +155,12 @@ export interface ResultatEquilibre {
 }
 
 function fini(v: number, nom: string, unite: string): number {
-  if (!Number.isFinite(v)) throw new Error(`${nom} doit etre un nombre (${unite}).`);
+  if (!Number.isFinite(v)) throw new Error(`${nom} doit être un nombre (${unite}).`);
   return v;
 }
 
 function positif(v: number, nom: string, unite: string): number {
-  if (!(Number.isFinite(v) && v > 0)) throw new Error(`${nom} doit etre un nombre strictement positif (${unite}).`);
+  if (!(Number.isFinite(v) && v > 0)) throw new Error(`${nom} doit être un nombre strictement positif (${unite}).`);
   return v;
 }
 
@@ -171,7 +171,7 @@ export function actionsElementaires(d: DonneesEquilibre): Elementaire[] {
   for (const s of d.segments) {
     const L = Math.hypot(s.x2 - s.x1, s.z2 - s.z1);
     positif(L, `Le segment ${s.id} : longueur`, 'm');
-    positif(s.e, `Le segment ${s.id} : epaisseur`, 'm');
+    positif(s.e, `Le segment ${s.id} : épaisseur`, 'm');
     if (!(Number.isFinite(s.gamma) && s.gamma >= 0)) throw new Error(`Le segment ${s.id} : poids volumique positif ou nul attendu (kN/m3).`);
     const W = s.gamma * s.e * L * p;
     liste.push({ origine: `poids de ${s.id}`, nature: 'G', Fx: 0, Fz: -W, x: (s.x1 + s.x2) / 2, z: (s.z1 + s.z2) / 2, C: 0 });
@@ -303,7 +303,7 @@ export function verifierEquilibre(d: DonneesEquilibre, profil: ProfilEquilibre):
   fini(b.xd, 'x_d', 'm');
   fini(b.z, 'z_b', 'm');
   if (!(b.xd > b.xg)) throw new Error('La base doit avoir x_d > x_g (m).');
-  if (!(Number.isFinite(d.mu) && d.mu >= 0)) throw new Error('Le frottement de calcul mu doit etre un nombre positif ou nul (-).');
+  if (!(Number.isFinite(d.mu) && d.mu >= 0)) throw new Error('Le frottement de calcul mu doit être un nombre positif ou nul (-).');
 
   const el = actionsElementaires(d);
   if (el.length === 0) throw new Error('Aucune action : saisir au moins un segment pesant ou une charge.');
@@ -313,9 +313,9 @@ export function verifierEquilibre(d: DonneesEquilibre, profil: ProfilEquilibre):
   const soulevement = soulever(el, profil.upl);
 
   const verifs: [string, number][] = [
-    ...renversement.map((r): [string, number] => [`renversement autour de l arete ${r.pivot}`, r.taux]),
+    ...renversement.map((r): [string, number] => [`renversement autour de l'arête ${r.pivot}`, r.taux]),
     ['glissement', glissement.taux],
-    ['soulevement', soulevement.taux],
+    ['soulèvement', soulevement.taux],
   ];
   const [nom, max] = verifs.reduce((a, v) => (v[1] > a[1] ? v : a));
   const ok = max <= 1;
@@ -326,6 +326,6 @@ export function verifierEquilibre(d: DonneesEquilibre, profil: ProfilEquilibre):
     soulevement,
     excentricite: excentricite(el, b),
     verdict: ok ? 'conforme' : 'non-conforme',
-    motif: `${ok ? 'Equilibre assure' : 'Equilibre non assure'} : taux maximal ${nombreAffiche(max)} (${nom}).`,
+    motif: `${ok ? 'Équilibre assuré' : 'Équilibre non assuré'} : taux maximal ${nombreAffiche(max)} (${nom}).`,
   };
 }

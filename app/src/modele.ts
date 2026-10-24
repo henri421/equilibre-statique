@@ -55,7 +55,7 @@ export function charge(partiel: Partial<LigneCharge> & { type: TypeCharge; id: s
 /** Exemples : la page s'ouvre sur un cas relisible a la main. */
 export const EXEMPLES: Record<string, { libelle: string; saisie: Saisie }> = {
   'mur-poids': {
-    libelle: 'Mur poids 1 × 3 m sous poussee triangulaire',
+    libelle: 'Mur poids 1 × 3 m sous poussée triangulaire',
     saisie: {
       segments: [{ id: 'mur', x1: '0,5', z1: '0', x2: '0,5', z2: '3', e: '1', gamma: '24' }],
       charges: [charge({ type: 'lineaire', id: 'poussee', xa: '0', za: '0', xb: '0', zb: '3', qa: '30', qb: '0', direction: 'horizontale' })],
@@ -67,7 +67,7 @@ export const EXEMPLES: Record<string, { libelle: string; saisie: Saisie }> = {
     },
   },
   'mur-en-l': {
-    libelle: 'Mur en L : voile, semelle, terre sur le talon, poussee et surcharge',
+    libelle: 'Mur en L : voile, semelle, terre sur le talon, poussée et surcharge',
     saisie: {
       segments: [
         { id: 'voile', x1: '0,6', z1: '0,4', x2: '0,6', z2: '3,4', e: '0,25', gamma: '25' },
@@ -95,7 +95,7 @@ export type Lecture = { ok: true; donnees: DonneesEquilibre } | { ok: false; mes
 
 function n(v: string, quoi: string): number {
   const x = lireNombre(v);
-  if (x === null) throw new Error(`${quoi} : nombre attendu, recu « ${v} ».`);
+  if (x === null) throw new Error(`${quoi} : nombre attendu, reçu « ${v} ».`);
   return x;
 }
 
