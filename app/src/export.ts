@@ -37,8 +37,8 @@ export const HYPOTHESES = [
 ];
 
 const AIDE =
-  "Outil d'aide au calcul : il constate, il ne prescrit pas. Valeurs recommandées de l'EN 1990 et de l'EN 1997-1 ; " +
-  "l'annexe nationale peut les modifier. Cette note est un compte rendu, pas une justification signée.";
+  "Valeurs recommandées de l'EN 1990 et de l'EN 1997-1 ; l'annexe nationale peut les modifier. " +
+  'La note rassemble les valeurs intermédiaires du calcul.';
 
 export function noteDeCalculHtml(r: ResultatEquilibre, profil: ProfilEquilibre, svg: string, entrees: string, date: string): string {
   return `<!doctype html>
