@@ -5,7 +5,7 @@
  * Coordonnees du modele en m, z vers le haut ; le SVG a y vers le bas.
  */
 
-import { echapper, nombreFr } from 'aedificium-ui';
+import { nombreFr, notationSvg } from 'aedificium-ui';
 import type { DonneesEquilibre, ResultatEquilibre } from '../../src/index';
 
 interface Cadre {
@@ -62,13 +62,13 @@ export function schema(d: DonneesEquilibre, r: ResultatEquilibre | null): string
       .map(([x, z]) => `${X(x).toFixed(1)},${Y(z).toFixed(1)}`)
       .join(' ');
     parts.push(`<polygon class="segment" points="${pts}" />`);
-    parts.push(`<text class="etiquette" x="${X((s.x1 + s.x2) / 2).toFixed(1)}" y="${Y((s.z1 + s.z2) / 2).toFixed(1)}" text-anchor="middle">${echapper(s.id)}</text>`);
+    parts.push(`<text class="etiquette" x="${X((s.x1 + s.x2) / 2).toFixed(1)}" y="${Y((s.z1 + s.z2) / 2).toFixed(1)}" text-anchor="middle">${notationSvg(s.id)}</text>`);
   }
 
   // Base et aretes de basculement.
   parts.push(`<line class="base" x1="${X(d.base.xg)}" y1="${Y(d.base.z)}" x2="${X(d.base.xd)}" y2="${Y(d.base.z)}" />`);
   for (const [x, nom] of [[d.base.xg, 'arete gauche'], [d.base.xd, 'arete droite']] as const) {
-    parts.push(`<circle class="pivot" cx="${X(x)}" cy="${Y(d.base.z)}" r="5" /><text class="etiquette" x="${X(x)}" y="${(Y(d.base.z) + 18).toFixed(1)}" text-anchor="middle">${nom}</text>`);
+    parts.push(`<circle class="pivot" cx="${X(x)}" cy="${Y(d.base.z)}" r="5" /><text class="etiquette" x="${X(x)}" y="${(Y(d.base.z) + 18).toFixed(1)}" text-anchor="middle">${notationSvg(nom)}</text>`);
   }
 
   // Charges lineaires : leur repartition, diagramme et fleches.
@@ -100,7 +100,7 @@ export function schema(d: DonneesEquilibre, r: ResultatEquilibre | null): string
     for (const e of r.elementaires) {
       if (e.C !== 0 || e.origine.startsWith('poids de')) continue;
       if (e.origine.includes('triangle')) {
-        parts.push(`<circle class="point-resultante" cx="${X(e.x).toFixed(1)}" cy="${Y(e.z).toFixed(1)}" r="3"><title>${echapper(e.origine)}</title></circle>`);
+        parts.push(`<circle class="point-resultante" cx="${X(e.x).toFixed(1)}" cy="${Y(e.z).toFixed(1)}" r="3"><title>${notationSvg(e.origine)}</title></circle>`);
         continue;
       }
       const n = Math.hypot(e.Fx, e.Fz) || 1;
@@ -119,7 +119,7 @@ export function schema(d: DonneesEquilibre, r: ResultatEquilibre | null): string
     const ex = r.excentricite;
     if (ex !== null) {
       parts.push(`<circle class="resultante" cx="${X(ex.xR).toFixed(1)}" cy="${Y(d.base.z).toFixed(1)}" r="4" />`);
-      parts.push(`<text class="etiquette" x="${X(ex.xR).toFixed(1)}" y="${(Y(d.base.z) + 32).toFixed(1)}" text-anchor="middle">x_R = ${nombreFr(ex.xR, 2)} m</text>`);
+      parts.push(`<text class="etiquette" x="${X(ex.xR).toFixed(1)}" y="${(Y(d.base.z) + 32).toFixed(1)}" text-anchor="middle">${notationSvg(`x_R = ${nombreFr(ex.xR, 2)} m`)}</text>`);
     }
   }
 

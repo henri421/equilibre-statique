@@ -5,7 +5,7 @@
  * la mise en forme a `modele`, `vue`, `dessin` et `export`, purs.
  */
 
-import { echapper, ouvrirOuTelecharger, svgAutonome, telecharger } from 'aedificium-ui';
+import { echapper, notationHtml, notationTexte, ouvrirOuTelecharger, svgAutonome, telecharger } from 'aedificium-ui';
 import { profilRecommande, verifierEquilibre, type DonneesEquilibre, type ResultatEquilibre } from '../../src/index';
 import { EXEMPLES, charge, lireSaisie, relire, saisieParDefaut, serialiser, type LigneCharge, type LigneSegment, type Saisie, type TypeCharge } from './modele';
 import { messageDErreur, rendreResultat, tableauEntrees, tableauProfil } from './vue';
@@ -70,7 +70,9 @@ function rendreSegments(): void {
     )
     .join('');
   zones.segments.innerHTML =
-    '<table class="actions"><thead><tr><th>Id</th><th>x1</th><th>z1</th><th>x2</th><th>z2</th><th>e (m)</th><th>&gamma; (kN/m³)</th><th></th></tr></thead>' +
+    '<table class="actions"><thead><tr><th>Id</th>' +
+    ['x_1', 'z_1', 'x_2', 'z_2'].map((t) => `<th>${notationHtml(t)}</th>`).join('') +
+    `<th>e (m)</th><th>${notationHtml('gamma (kN/m3)')}</th><th></th></tr></thead>` +
     `<tbody>${lignes}</tbody></table>`;
 }
 
@@ -78,6 +80,13 @@ const CHAMPS_CHARGE: Record<TypeCharge, [keyof LigneCharge, string][]> = {
   ponctuelle: [['x', 'x'], ['z', 'z'], ['Fx', 'F_x →'], ['Fz', 'F_z ↓']],
   lineaire: [['xa', 'x_A'], ['za', 'z_A'], ['xb', 'x_B'], ['zb', 'z_B'], ['qa', 'q_A'], ['qb', 'q_B']],
   moment: [['M', 'M ↺ (kN.m)']],
+};
+
+/** Libelles des types de charge, jamais leur identifiant. */
+const LIBELLES_TYPE: Record<TypeCharge, string> = {
+  ponctuelle: 'ponctuelle',
+  lineaire: 'linéaire',
+  moment: 'moment',
 };
 
 function rendreCharges(): void {
@@ -89,10 +98,10 @@ function rendreCharges(): void {
           ? `<select data-liste="charges" data-index="${i}" data-champ="direction" aria-label="direction"><option value="verticale"${c.direction === 'verticale' ? ' selected' : ''}>verticale ↓</option><option value="horizontale"${c.direction === 'horizontale' ? ' selected' : ''}>horizontale →</option></select>`
           : '';
       const champs = CHAMPS_CHARGE[c.type]
-        .map(([k, lib]) => `<label class="mini"><span>${lib}</span>${champ('charges', i, k, String(c[k]))}</label>`)
+        .map(([k, lib]) => `<label class="mini"><span>${notationHtml(lib)}</span>${champ('charges', i, k, String(c[k]))}</label>`)
         .join('');
       return (
-        `<div class="ligne-charge"><div class="tete">${champ('charges', i, 'id', c.id, 'id')}<span class="type">${c.type}</span>${nature}${direction}` +
+        `<div class="ligne-charge"><div class="tete">${champ('charges', i, 'id', c.id, 'id')}<span class="type">${LIBELLES_TYPE[c.type]}</span>${nature}${direction}` +
         `<button type="button" class="retirer" data-action="retirer" data-liste="charges" data-index="${i}" aria-label="retirer">×</button></div>` +
         `<div class="champs">${champs}</div></div>`
       );
@@ -110,7 +119,7 @@ function ecrireChampsFixes(): void {
 
 function montrerErreur(m: string | null): void {
   zones.erreur.hidden = m === null;
-  zones.erreur.textContent = m ?? '';
+  zones.erreur.innerHTML = m === null ? '' : notationHtml(m);
 }
 
 function recalculer(): void {
@@ -200,7 +209,7 @@ document.addEventListener('click', (ev) => {
 });
 
 selecteurExemple.innerHTML =
-  '<option value="">— exemple —</option>' + Object.entries(EXEMPLES).map(([k, e]) => `<option value="${k}">${echapper(e.libelle)}</option>`).join('');
+  '<option value="">— exemple —</option>' + Object.entries(EXEMPLES).map(([k, e]) => `<option value="${k}">${notationTexte(e.libelle)}</option>`).join('');
 selecteurExemple.addEventListener('change', () => {
   const ex = EXEMPLES[selecteurExemple.value];
   if (ex === undefined) return;
@@ -223,7 +232,7 @@ exige<HTMLInputElement>('[data-role="ouvrir"]').addEventListener('change', async
 });
 
 zones.profil.innerHTML = tableauProfil(PROFIL);
-zones.hypotheses.innerHTML = HYPOTHESES.map((h) => `<li>${echapper(h)}</li>`).join('');
+zones.hypotheses.innerHTML = HYPOTHESES.map((h) => `<li>${notationHtml(h)}</li>`).join('');
 toutRendre();
 
 // Hors navigateur (tests), pas de service worker.

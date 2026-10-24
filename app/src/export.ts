@@ -2,7 +2,7 @@
  * Sorties : SVG autonome, CSV, note de calcul. PUR, sans DOM.
  */
 
-import { JETONS, csv, echapper } from 'aedificium-ui';
+import { JETONS, csv, notationHtml, notationTexte } from 'aedificium-ui';
 import type { ProfilEquilibre, ResultatEquilibre } from '../../src/index';
 import { lignesCsv, rendreResultat, tableauProfil } from './vue';
 
@@ -23,7 +23,7 @@ svg .point-resultante { fill: var(--traction); }
 svg .etiquette { fill: var(--texte-doux); font-size: 11px; }`;
 
 export function resultatEnCsv(r: ResultatEquilibre): string {
-  return csv(lignesCsv(r));
+  return csv(lignesCsv(r).map((l) => l.map(notationTexte)));
 }
 
 export const HYPOTHESES = [
@@ -64,12 +64,12 @@ export function noteDeCalculHtml(r: ResultatEquilibre, profil: ProfilEquilibre, 
   .pied { margin-top: 2rem; border-top: 1px solid var(--bordure); color: var(--texte-doux); font-size: .78rem; padding-top: .5rem; }
 </style></head><body>
 <h1>Note de calcul — equilibre statique</h1>
-<p class="clause">${echapper(date)} · ${echapper(profil.nom)}</p>
+<p class="clause">${notationHtml(date)} · ${notationHtml(profil.nom)}</p>
 <h2>Donnees</h2>${entrees}
 <figure>${svg}</figure>
 <h2>Coefficients partiels</h2>${tableauProfil(profil)}
 <h2>Verifications</h2>${rendreResultat(r)}
-<h2>Hypotheses et limites</h2><ul>${HYPOTHESES.map((h) => `<li>${echapper(h)}</li>`).join('')}</ul>
+<h2>Hypotheses et limites</h2><ul>${HYPOTHESES.map((h) => `<li>${notationHtml(h)}</li>`).join('')}</ul>
 <p class="pied">${AIDE}</p>
 </body></html>`;
 }

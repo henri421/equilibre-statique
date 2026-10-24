@@ -3,7 +3,7 @@
  * fonctions ; le CSV lit `lignesCsv`, la meme matiere en cellules.
  */
 
-import { echapper, nombreFr, tauxFr } from 'aedificium-ui';
+import { nombreFr, notationHtml, tauxFr } from 'aedificium-ui';
 import type { DonneesEquilibre, ProfilEquilibre, Renversement, ResultatEquilibre } from '../../src/index';
 
 export function messageDErreur(e: unknown): string {
@@ -18,7 +18,7 @@ function celluleTaux(t: number): string {
 }
 
 export function verdictHtml(r: ResultatEquilibre): string {
-  return `<p class="verdict verdict-${r.verdict}">${r.verdict === 'conforme' ? 'Equilibre assure' : 'Equilibre non assure'}</p><p class="motif">${echapper(r.motif)}</p>`;
+  return `<p class="verdict verdict-${r.verdict}">${r.verdict === 'conforme' ? 'Equilibre assure' : 'Equilibre non assure'}</p><p class="motif">${notationHtml(r.motif)}</p>`;
 }
 
 /** Tableau de synthese des verifications. */
@@ -30,8 +30,8 @@ export function tableauSynthese(r: ResultatEquilibre): string {
         `<tr><td>Renversement autour de l arete ${x.pivot} (x = ${f(x.x)} m)</td><td>EQU, EN 1990 tableau A1.2(A)</td>` +
         `<td class="valeur">${f(x.M_dst_d)} kN.m</td><td class="valeur">${f(x.M_stb_d)} kN.m</td>${celluleTaux(x.taux)}</tr>`
     ),
-    `<tr><td>Glissement vers ${g.sens > 0 ? '+x' : '-x'}</td><td>STR/GEO, tableau A1.2(B), R_d = mu_d N_d</td>` +
-      `<td class="valeur">${f(g.H_d)} kN</td><td class="valeur">${f(g.R_d)} kN (N_d = ${f(g.N_d)})</td>${celluleTaux(g.taux)}</tr>`,
+    `<tr><td>Glissement vers ${g.sens > 0 ? '+x' : '-x'}</td><td>STR/GEO, tableau A1.2(B), ${notationHtml('R_d = mu_d N_d')}</td>` +
+      `<td class="valeur">${f(g.H_d)} kN</td><td class="valeur">${f(g.R_d)} kN (${notationHtml('N_d')} = ${f(g.N_d)})</td>${celluleTaux(g.taux)}</tr>`,
     `<tr><td>Soulevement</td><td>UPL, EN 1997-1 tableau A.15</td><td class="valeur">${f(r.soulevement.V_dst_d)} kN</td>` +
       `<td class="valeur">${f(r.soulevement.V_stb_d)} kN</td>${celluleTaux(r.soulevement.taux)}</tr>`,
   ].join('');
@@ -78,7 +78,7 @@ export function tableauMoments(x: Renversement): string {
       const stb = l.role === 'stabilisant' ? f(l.Md) : '';
       const dst = l.role === 'destabilisant' ? f(l.Md) : '';
       return (
-        `<tr class="${l.role}"><td>${echapper(e.origine)}</td><td>${e.nature}</td><td class="valeur">${charge}</td>` +
+        `<tr class="${l.role}"><td>${notationHtml(e.origine)}</td><td>${e.nature}</td><td class="valeur">${charge}</td>` +
         `<td class="valeur">${l.d === null ? '—' : f(l.d, 3)}</td><td class="valeur">${f(l.gamma)}</td>` +
         `<td class="valeur">${stb}</td><td class="valeur">${dst}</td></tr>`
       );
@@ -91,16 +91,16 @@ export function tableauMoments(x: Renversement): string {
   return (
     `<h3>Renversement autour de l arete ${x.pivot} (x = ${f(x.x)} m, z = ${f(x.z)} m)</h3>` +
     '<div class="defilement"><table class="zones moments"><thead><tr><th>Charge</th><th>G/Q</th><th>F<br>(kN)</th><th>Distance d<br>(m)</th>' +
-    '<th>&gamma;<sub>f</sub></th><th>M stabilisant<br>(kN.m)</th><th>M destabilisant<br>(kN.m)</th></tr></thead>' +
+    `<th>${notationHtml('gamma_f')}</th><th>M stabilisant<br>(kN.m)</th><th>M destabilisant<br>(kN.m)</th></tr></thead>` +
     `<tbody>${lignes}</tbody><tfoot>${somme}</tfoot></table></div>` +
-    '<p class="note">M = F × d × &gamma;<sub>f</sub> ; d est la distance du pivot a la ligne d action de la charge.</p>'
+    `<p class="note">${notationHtml('M = F × d × gamma_f ; d est la distance du pivot a la ligne d action de la charge.')}</p>`
   );
 }
 
 export function tableauProfil(p: ProfilEquilibre): string {
   const ligne = (nom: string, j: ProfilEquilibre['equ']) =>
     `<tr><td>${nom}</td><td class="valeur">${f(j.gG_dst.valeur)}</td><td class="valeur">${f(j.gG_stb.valeur)}</td><td class="valeur">${f(j.gQ_dst.valeur)}</td>` +
-    `<td class="valeur">${f(j.gQ_stb.valeur)}</td><td class="clause">${echapper(j.gG_dst.source)}</td></tr>`;
+    `<td class="valeur">${f(j.gQ_stb.valeur)}</td><td class="clause">${notationHtml(j.gG_dst.source)}</td></tr>`;
   return (
     '<div class="defilement"><table class="zones"><thead><tr><th>Verification</th><th>G dst</th><th>G stb</th><th>Q dst</th><th>Q stb</th><th>Source</th></tr></thead><tbody>' +
     ligne('Renversement (EQU)', p.equ) +
@@ -115,7 +115,7 @@ export function rendreResultat(r: ResultatEquilibre): string {
   return (
     verdictHtml(r) +
     tableauSynthese(r) +
-    `<p class="note">${echapper(texteExcentricite(r))}</p>` +
+    `<p class="note">${notationHtml(texteExcentricite(r))}</p>` +
     r.renversement.map(tableauMoments).join('')
   );
 }
@@ -153,7 +153,7 @@ export function lignesCsv(r: ResultatEquilibre): string[][] {
 /** Les donnees lues, pour la note : segments, charges, base. */
 export function tableauEntrees(d: DonneesEquilibre): string {
   const seg = d.segments
-    .map((s) => `<tr><td>${echapper(s.id)}</td><td class="valeur">(${f(s.x1)} ; ${f(s.z1)}) → (${f(s.x2)} ; ${f(s.z2)})</td><td class="valeur">${f(s.e)}</td><td class="valeur">${f(s.gamma, 1)}</td></tr>`)
+    .map((s) => `<tr><td>${notationHtml(s.id)}</td><td class="valeur">(${f(s.x1)} ; ${f(s.z1)}) → (${f(s.x2)} ; ${f(s.z2)})</td><td class="valeur">${f(s.e)}</td><td class="valeur">${f(s.gamma, 1)}</td></tr>`)
     .join('');
   const ch = d.charges
     .map((c) => {
@@ -163,14 +163,14 @@ export function tableauEntrees(d: DonneesEquilibre): string {
           : c.type === 'moment'
             ? `moment ${f(c.M)} kN.m (trigonometrique)`
             : `${c.direction} de (${f(c.xa)} ; ${f(c.za)}) a (${f(c.xb)} ; ${f(c.zb)}) : q = ${f(c.qa)} a ${f(c.qb)} kN/m`;
-      return `<tr><td>${echapper(c.id)}</td><td>${c.nature}</td><td>${echapper(desc)}</td></tr>`;
+      return `<tr><td>${notationHtml(c.id)}</td><td>${c.nature}</td><td>${notationHtml(desc)}</td></tr>`;
     })
     .join('');
   return (
-    '<h3>Segments</h3><div class="defilement"><table class="zones"><thead><tr><th>Id</th><th>Axe (m)</th><th>e (m)</th><th>gamma (kN/m3)</th></tr></thead>' +
+    `<h3>Segments</h3><div class="defilement"><table class="zones"><thead><tr><th>Id</th><th>Axe (m)</th><th>e (m)</th><th>${notationHtml('gamma (kN/m3)')}</th></tr></thead>` +
     `<tbody>${seg}</tbody></table></div>` +
     '<h3>Charges</h3><div class="defilement"><table class="zones"><thead><tr><th>Id</th><th>G/Q</th><th>Description</th></tr></thead>' +
     `<tbody>${ch}</tbody></table></div>` +
-    `<p class="note">Base de x = ${f(d.base.xg)} a ${f(d.base.xd)} m, z = ${f(d.base.z)} m ; mu_d = ${f(d.mu, 3)} ; profondeur ${f(d.profondeur)} m.</p>`
+    `<p class="note">${notationHtml(`Base de x = ${f(d.base.xg)} a ${f(d.base.xd)} m, z = ${f(d.base.z)} m ; mu_d = ${f(d.mu, 3)} ; profondeur ${f(d.profondeur)} m.`)}</p>`
   );
 }
