@@ -3,18 +3,19 @@
  * fonctions ; le CSV lit `lignesCsv`, la meme matiere en cellules.
  */
 
-import { nombreFr, notationHtml, tauxFr } from 'aedificium-ui';
+import { nombreAffiche, notationHtml, tauxAffiche } from 'aedificium-ui';
 import type { DonneesEquilibre, ProfilEquilibre, Renversement, ResultatEquilibre } from '../../src/index';
 
 export function messageDErreur(e: unknown): string {
   return e instanceof Error ? e.message : String(e);
 }
 
-const f = (x: number, d = 2) => nombreFr(x, d);
+/** Nombre affiche : trois decimales au plus, sans zeros inutiles. */
+const f = (x: number, d = 2) => nombreAffiche(x, Math.min(d, 3));
 
 function celluleTaux(t: number): string {
   if (!Number.isFinite(t)) return '<td class="valeur refus">infini</td>';
-  return `<td class="valeur ${t <= 1 ? 'ok' : 'refus'}">${tauxFr(t)}</td>`;
+  return `<td class="valeur ${t <= 1 ? 'ok' : 'refus'}">${tauxAffiche(t)}</td>`;
 }
 
 export function verdictHtml(r: ResultatEquilibre): string {
@@ -51,7 +52,7 @@ export function texteExcentricite(r: ResultatEquilibre): string {
       ? 'hors du noyau central : decollement partiel de la base'
       : 'HORS DE LA BASE : l element bascule';
   return (
-    `Resultante caracteristique (toutes actions a 1,0) : N = ${f(e.N)} kN, x_R = ${f(e.xR, 3)} m, ` +
+    `Resultante caracteristique (toutes actions a 1) : N = ${f(e.N)} kN, x_R = ${f(e.xR, 3)} m, ` +
     `e = ${f(e.e, 3)} m pour B / 6 = ${f(e.B / 6, 3)} m, ${situation}. Indication, sans verdict.`
   );
 }
@@ -87,7 +88,7 @@ export function tableauMoments(x: Renversement): string {
   const somme =
     `<tr class="somme"><td colspan="5">Somme</td><td class="valeur">${f(x.M_stb_d)}</td><td class="valeur">${f(x.M_dst_d)}</td></tr>` +
     `<tr class="somme"><td colspan="5">Taux = somme destabilisante / somme stabilisante</td><td colspan="2" class="valeur ${x.taux <= 1 ? 'ok' : 'refus'}">` +
-    `${Number.isFinite(x.taux) ? tauxFr(x.taux) : 'infini'}</td></tr>`;
+    `${Number.isFinite(x.taux) ? tauxAffiche(x.taux) : 'infini'}</td></tr>`;
   return (
     `<h3>Renversement autour de l arete ${x.pivot} (x = ${f(x.x)} m, z = ${f(x.z)} m)</h3>` +
     '<div class="defilement"><table class="zones moments"><thead><tr><th>Charge</th><th>G/Q</th><th>F<br>(kN)</th><th>Distance d<br>(m)</th>' +
@@ -122,7 +123,7 @@ export function rendreResultat(r: ResultatEquilibre): string {
 
 /** Les memes grandeurs en cellules, pour le CSV. */
 export function lignesCsv(r: ResultatEquilibre): string[][] {
-  const t = (x: number) => (Number.isFinite(x) ? tauxFr(x) : 'infini');
+  const t = (x: number) => (Number.isFinite(x) ? tauxAffiche(x) : 'infini');
   const lignes: string[][] = [['Verification', 'Destabilisant', 'Stabilisant', 'Taux']];
   for (const x of r.renversement) lignes.push([`Renversement, arete ${x.pivot}`, f(x.M_dst_d), f(x.M_stb_d), t(x.taux)]);
   lignes.push([`Glissement vers ${r.glissement.sens > 0 ? '+x' : '-x'}`, f(r.glissement.H_d), f(r.glissement.R_d), t(r.glissement.taux)]);

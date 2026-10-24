@@ -289,6 +289,13 @@ function excentricite(el: Elementaire[], b: Base): Excentricite | null {
   return { N, xR, e, B, noyauCentral: e <= B / 6 + 1e-12, dansLaBase: e < B / 2 };
 }
 
+/** Nombre tel qu'il s'affiche : trois decimales au plus, sans zeros inutiles. */
+function nombreAffiche(valeur: number): string {
+  if (!Number.isFinite(valeur)) return 'infini';
+  const texte = valeur.toFixed(3).replace('.', ',');
+  return texte.includes(',') ? texte.replace(/,?0+$/, '') : texte;
+}
+
 export function verifierEquilibre(d: DonneesEquilibre, profil: ProfilEquilibre): ResultatEquilibre {
   verifierProfil(profil);
   const b = d.base;
@@ -319,6 +326,6 @@ export function verifierEquilibre(d: DonneesEquilibre, profil: ProfilEquilibre):
     soulevement,
     excentricite: excentricite(el, b),
     verdict: ok ? 'conforme' : 'non-conforme',
-    motif: `${ok ? 'Equilibre assure' : 'Equilibre non assure'} : taux maximal ${Number.isFinite(max) ? max.toFixed(3) : 'infini'} (${nom}).`,
+    motif: `${ok ? 'Equilibre assure' : 'Equilibre non assure'} : taux maximal ${nombreAffiche(max)} (${nom}).`,
   };
 }

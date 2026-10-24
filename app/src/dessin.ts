@@ -5,7 +5,7 @@
  * Coordonnees du modele en m, z vers le haut ; le SVG a y vers le bas.
  */
 
-import { nombreFr, notationSvg } from 'aedificium-ui';
+import { nombreAffiche, notationSvg } from 'aedificium-ui';
 import type { DonneesEquilibre, ResultatEquilibre } from '../../src/index';
 
 interface Cadre {
@@ -119,7 +119,7 @@ export function schema(d: DonneesEquilibre, r: ResultatEquilibre | null): string
     const ex = r.excentricite;
     if (ex !== null) {
       parts.push(`<circle class="resultante" cx="${X(ex.xR).toFixed(1)}" cy="${Y(d.base.z).toFixed(1)}" r="4" />`);
-      parts.push(`<text class="etiquette" x="${X(ex.xR).toFixed(1)}" y="${(Y(d.base.z) + 32).toFixed(1)}" text-anchor="middle">${notationSvg(`x_R = ${nombreFr(ex.xR, 2)} m`)}</text>`);
+      parts.push(`<text class="etiquette" x="${X(ex.xR).toFixed(1)}" y="${(Y(d.base.z) + 32).toFixed(1)}" text-anchor="middle">${notationSvg(`x_R = ${nombreAffiche(ex.xR, 2)} m`)}</text>`);
     }
   }
 
