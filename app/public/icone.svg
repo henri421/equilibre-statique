@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <rect width="512" height="512" rx="72" fill="#f7f7f6"/>
-  <path d="M 150 420 L 150 270 L 300 170 L 450 270 L 450 420 Z" fill="#e7eaee" stroke="#1a1a1a" stroke-width="10" stroke-linejoin="round"/>
-  <path d="M 140 262 L 300 155 L 460 262 L 460 238 L 300 128 L 140 238 Z" fill="#2f5d8a"/>
-  <g stroke="#1e5aa8" stroke-width="12" stroke-linecap="round" fill="none">
-    <line x1="52" y1="300" x2="124" y2="300"/>
-    <line x1="52" y1="350" x2="124" y2="350"/>
-    <line x1="52" y1="400" x2="124" y2="400"/>
-  </g>
+  <polygon points="200,104 264,104 264,352 392,352 392,416 136,416 136,352 200,352" fill="#e7eaee" stroke="#1a1a1a" stroke-width="8"/>
+  <line x1="56" y1="420" x2="456" y2="420" stroke="#1a1a1a" stroke-width="8" stroke-linecap="round"/>
+  <line x1="60" y1="150" x2="168" y2="150" stroke="#1e5aa8" stroke-width="14" stroke-linecap="round"/>
+  <polygon points="160,126 200,150 160,174" fill="#1e5aa8"/>
+  <line x1="290" y1="260" x2="290" y2="314" stroke="#2f5d8a" stroke-width="14" stroke-linecap="round"/>
+  <polygon points="266,306 314,306 290,346" fill="#2f5d8a"/>
+  <circle cx="392" cy="416" r="18" fill="#a8442a"/>
 </svg>
