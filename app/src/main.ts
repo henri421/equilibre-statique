@@ -5,12 +5,13 @@
  * la mise en forme a `modele`, `vue`, `dessin` et `export`, purs.
  */
 
-import { echapper, notationHtml, notationTexte, ouvrirOuTelecharger, svgAutonome, telecharger } from 'aedificium-ui';
+import { echapper, noteDeCalculHtml, notationHtml, notationTexte, ouvrirOuTelecharger, svgAutonome, telecharger } from 'aedificium-ui';
 import { profilRecommande, verifierEquilibre, type DonneesEquilibre, type ResultatEquilibre } from '../../src/index';
 import { EXEMPLES, charge, lireSaisie, relire, saisieParDefaut, serialiser, type LigneCharge, type LigneSegment, type Saisie, type TypeCharge } from './modele';
-import { messageDErreur, rendreResultat, tableauEntrees, tableauProfil } from './vue';
+import { messageDErreur, rendreResultat, tableauProfil } from './vue';
 import { schema } from './dessin';
-import { HYPOTHESES, STYLES_TRACE, noteDeCalculHtml, resultatEnCsv } from './export';
+import { STYLES_TRACE, resultatEnCsv } from './export';
+import { HYPOTHESES, noteDuCalcul } from './note';
 import './style.css';
 
 const PROFIL = profilRecommande();
@@ -33,6 +34,42 @@ const zones = {
   hypotheses: exige<HTMLElement>('[data-role="hypotheses"]'),
 };
 const selecteurExemple = exige<HTMLSelectElement>('[data-role="exemple"]');
+
+// --- Cartouche de la note (hors formulaire : ne relance pas le calcul) -------------
+
+const CLE_CARTOUCHE = 'equilibre-statique:cartouche';
+const sectionSorties = exige<HTMLElement>('#sorties');
+const champProjet = exige<HTMLInputElement>('[data-role="projet"]');
+const champElement = exige<HTMLInputElement>('[data-role="element"]');
+
+function lireCartouche(): { projet: string; element: string } {
+  try {
+    const t = window.localStorage.getItem(CLE_CARTOUCHE);
+    if (t === null) return { projet: '', element: '' };
+    const v: unknown = JSON.parse(t);
+    if (typeof v !== 'object' || v === null) return { projet: '', element: '' };
+    const o = v as Record<string, unknown>;
+    return {
+      projet: typeof o.projet === 'string' ? o.projet : '',
+      element: typeof o.element === 'string' ? o.element : '',
+    };
+  } catch {
+    return { projet: '', element: '' };
+  }
+}
+
+function memoriserCartouche(): void {
+  try {
+    window.localStorage.setItem(CLE_CARTOUCHE, JSON.stringify({ projet: champProjet.value, element: champElement.value }));
+  } catch {
+    // Stockage indisponible : la page fonctionne sans.
+  }
+}
+
+const cartouche = lireCartouche();
+champProjet.value = cartouche.projet;
+champElement.value = cartouche.element;
+sectionSorties.addEventListener('input', memoriserCartouche);
 
 function charger(): Saisie | null {
   try {
@@ -203,7 +240,14 @@ document.addEventListener('click', (ev) => {
   else if (action === 'exporter-note') {
     ouvrirOuTelecharger(
       'equilibre-note.html',
-      noteDeCalculHtml(dernier.resultat, PROFIL, dernier.svg, tableauEntrees(dernier.donnees), new Date().toISOString().slice(0, 10))
+      noteDeCalculHtml(
+        noteDuCalcul(PROFIL, dernier.donnees, {
+          projet: champProjet.value,
+          element: champElement.value,
+          date: new Date().toISOString().slice(0, 10),
+        }),
+        STYLES_TRACE
+      )
     );
   }
 });
