@@ -7,12 +7,13 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
-import { NOMS_GRECS, notationHtml, constatsAffichage, contenuBalise, texteVisible } from 'aedificium-ui';
+import { NOMS_GRECS, noteDeCalculHtml, notationHtml, constatsAffichage, contenuBalise, texteVisible } from 'aedificium-ui';
 import { profilRecommande, verifierEquilibre } from '../../src/index';
 import { EXEMPLES, lireSaisie, saisieParDefaut } from '../../app/src/modele';
 import { rendreResultat, tableauEntrees, tableauProfil } from '../../app/src/vue';
 import { schema } from '../../app/src/dessin';
-import { resultatEnCsv, noteDeCalculHtml } from '../../app/src/export';
+import { STYLES_TRACE, resultatEnCsv } from '../../app/src/export';
+import { noteDuCalcul } from '../../app/src/note';
 
 const P = profilRecommande();
 const TITRE = 'Équilibre statique';
@@ -29,7 +30,7 @@ function sorties() {
     const r = verifierEquilibre(l.donnees, P);
     const svg = schema(l.donnees, r);
     ecran.push(ex.libelle, schema(l.donnees, null), svg, rendreResultat(r), tableauEntrees(l.donnees));
-    notes.push(noteDeCalculHtml(r, P, svg, tableauEntrees(l.donnees), '2026-10-24'));
+    notes.push(noteDeCalculHtml(noteDuCalcul(P, l.donnees, { projet: 'Quai', element: '', date: '2026-10-24' }), STYLES_TRACE));
     csv.push(resultatEnCsv(r));
   }
   return { ecran, notes, csv };

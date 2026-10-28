@@ -59,7 +59,7 @@ export function texteExcentricite(r: ResultatEquilibre): string {
 
 /** Le detail des moments autour d'une arete : bras de levier, role, coefficient. */
 /** Sens de la charge en une fleche : →, ←, ↓, ↑, ou oblique. */
-function sens(Fx: number, Fz: number): string {
+export function sens(Fx: number, Fz: number): string {
   if (Fz === 0) return Fx > 0 ? '→' : '←';
   if (Fx === 0) return Fz < 0 ? '↓' : '↑';
   return `${Fx > 0 ? '→' : '←'}${Fz < 0 ? '↓' : '↑'}`;

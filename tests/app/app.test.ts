@@ -4,9 +4,10 @@ import { fileURLToPath } from 'node:url';
 import { JETONS, valeursDesJetons } from 'aedificium-ui';
 import { profilRecommande, verifierEquilibre } from '../../src/index';
 import { EXEMPLES, lireSaisie, relire, saisieParDefaut, serialiser } from '../../app/src/modele';
-import { rendreResultat, tableauEntrees } from '../../app/src/vue';
 import { schema } from '../../app/src/dessin';
-import { noteDeCalculHtml } from '../../app/src/export';
+import { noteDeCalculHtml } from 'aedificium-ui';
+import { STYLES_TRACE } from '../../app/src/export';
+import { noteDuCalcul } from '../../app/src/note';
 
 const P = profilRecommande();
 
@@ -33,14 +34,14 @@ describe('saisie', () => {
 });
 
 describe('sorties', () => {
-  it('la note porte les tableaux de l ecran', () => {
+  it('la note porte le schema du calcul', () => {
     const l = lireSaisie(saisieParDefaut());
     if (!l.ok) throw new Error(l.message);
     const r = verifierEquilibre(l.donnees, P);
     const svg = schema(l.donnees, r);
     expect(svg).not.toContain('NaN');
-    const note = noteDeCalculHtml(r, P, svg, tableauEntrees(l.donnees), '2026-10-23');
-    expect(note).toContain(rendreResultat(r));
+    const note = noteDeCalculHtml(noteDuCalcul(P, l.donnees, { projet: '', element: '', date: '2026-10-23' }), STYLES_TRACE);
+    expect(note).toContain(svg);
   });
 
   it('le :root de style.css concorde avec les jetons communs', () => {
