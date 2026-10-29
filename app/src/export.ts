@@ -20,7 +20,14 @@ svg .resultante { fill: var(--accent); }
 svg .diagramme { fill: var(--traction); fill-opacity: 0.12; stroke: var(--traction); stroke-width: 1; }
 svg .diagramme-Q { stroke-dasharray: 6 4; }
 svg .point-resultante { fill: var(--traction); }
-svg .etiquette { fill: var(--texte-doux); font-size: 11px; }`;
+svg .etiquette { fill: var(--texte-doux); font-size: 11px; }
+svg .grille { stroke: var(--texte-doux); stroke-opacity: 0.25; stroke-width: 0.5; }
+svg .axe { stroke: var(--texte-doux); stroke-width: 1; stroke-dasharray: 4 3; }
+svg .point { fill: var(--texte); }
+svg .en-cours { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+svg .elastique { stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 5 4; }
+svg .cote { fill: var(--texte-doux); font-size: 11px; }
+svg .choisi { stroke: var(--accent); }`;
 
 export function resultatEnCsv(r: ResultatEquilibre): string {
   return csv(lignesCsv(r).map((l) => l.map(notationTexte)));
