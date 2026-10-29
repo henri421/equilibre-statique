@@ -142,7 +142,7 @@ export function choixDeSelection(g: Graphe<Ancre[], Choix>, sel: Selection): Cho
   }
   const noeud = g.noeuds.find((n) => n.id === sel.id);
   if (noeud === undefined) return null;
-  const ponctuelle = noeud.donnees.find((a) => a.liste === 'charges' && a.bout === 'p');
+  const ponctuelle = noeud.donnees.find((a): a is Extract<Ancre, { liste: 'charges' }> => a.liste === 'charges' && a.bout === 'p');
   if (ponctuelle !== undefined) return { liste: 'charges', index: ponctuelle.index };
   return noeud.donnees.length > 0 ? proprietaire(noeud.donnees[0]) : null;
 }
