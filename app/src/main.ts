@@ -2,20 +2,52 @@
  * Cablage de l'interface de l'equilibre statique.
  *
  * Ce module ne calcule RIEN : il tient la saisie, appelle le noyau, et confie
- * la mise en forme a `modele`, `vue`, `dessin` et `export`, purs.
+ * la mise en forme a `modele`, `vue`, `form`, `dessin` et `export`, purs.
  */
 
-import { echapper, noteDeCalculHtml, notationHtml, notationTexte, ouvrirOuTelecharger, svgAutonome, telecharger } from 'aedificium-ui';
+import {
+  annuler as annulerHistorique,
+  brancherEditeur,
+  historique,
+  noteDeCalculHtml,
+  notationHtml,
+  notationTexte,
+  ouvrirOuTelecharger,
+  pousser,
+  retablir as retablirHistorique,
+  svgAutonome,
+  telecharger,
+  type ActionEditeur,
+} from 'aedificium-ui';
 import { profilRecommande, verifierEquilibre, type DonneesEquilibre, type ResultatEquilibre } from '../../src/index';
-import { EXEMPLES, charge, lireSaisie, relire, saisieParDefaut, serialiser, type LigneCharge, type LigneSegment, type Saisie, type TypeCharge } from './modele';
-import { messageDErreur, rendreResultat, tableauProfil } from './vue';
-import { schema } from './dessin';
+import { EXEMPLES, charge, lireSaisie, relire, saisieParDefaut, serialiser, type Saisie, type TypeCharge } from './modele';
+import { messageDErreur, rendreResultat, tableauProfil, verdictsHtml } from './vue';
+import { OPTIONS_EDITION, dessinSaisie, vueDeSaisie } from './dessin';
 import { STYLES_TRACE, resultatEnCsv } from './export';
 import { HYPOTHESES, noteDuCalcul } from './note';
+import {
+  abandonner,
+  appliquer,
+  etatInitial,
+  grapheDeSaisie,
+  modifierChamp,
+  outilEditeur,
+  selectionDeChoix,
+  texteNombre,
+  type Choix,
+  type EtatEdition,
+  type OutilEquilibre,
+} from './edition';
+import { chargesHtml, elementChoisiHtml, tableSegmentsHtml } from './form';
 import './style.css';
 
 const PROFIL = profilRecommande();
 const CLE_STOCKAGE = 'equilibre-statique/saisie';
+const CLE_CARTOUCHE = 'equilibre-statique:cartouche';
+const LARGEUR = 640;
+const HAUTEUR = 520;
+/** Pas de la grille aimantee, en m. */
+const PAS_GRILLE = 0.1;
 
 function exige<T extends Element>(selecteur: string): T {
   const e = document.querySelector<T>(selecteur);
@@ -24,23 +56,25 @@ function exige<T extends Element>(selecteur: string): T {
 }
 
 const formulaire = exige<HTMLFormElement>('#formulaire');
+const sectionDessin = exige<HTMLElement>('#dessin');
+const sectionSorties = exige<HTMLElement>('#sorties');
 const zones = {
   segments: exige<HTMLElement>('[data-role="segments"]'),
   charges: exige<HTMLElement>('[data-role="charges"]'),
+  elementChoisi: exige<HTMLElement>('[data-role="element-choisi"]'),
   erreur: exige<HTMLElement>('[data-role="erreur"]'),
-  schema: exige<HTMLElement>('[data-role="schema"]'),
+  zone: exige<SVGSVGElement>('[data-role="zone"]'),
+  statut: exige<HTMLElement>('[data-role="statut"]'),
   resultat: exige<HTMLElement>('[data-role="resultat"]'),
   profil: exige<HTMLElement>('[data-role="profil"]'),
   hypotheses: exige<HTMLElement>('[data-role="hypotheses"]'),
-};
+  verdicts: exige<HTMLElement>('[data-role="liste-verdicts"]'),
+} as const;
 const selecteurExemple = exige<HTMLSelectElement>('[data-role="exemple"]');
-
-// --- Cartouche de la note (hors formulaire : ne relance pas le calcul) -------------
-
-const CLE_CARTOUCHE = 'equilibre-statique:cartouche';
-const sectionSorties = exige<HTMLElement>('#sorties');
 const champProjet = exige<HTMLInputElement>('[data-role="projet"]');
 const champElement = exige<HTMLInputElement>('[data-role="element"]');
+
+// --- Cartouche de la note (hors formulaire : ne relance pas le calcul) -------------
 
 function lireCartouche(): { projet: string; element: string } {
   try {
@@ -82,157 +116,240 @@ function charger(): Saisie | null {
 
 function memoriser(): void {
   try {
-    window.localStorage.setItem(CLE_STOCKAGE, serialiser(saisie));
+    window.localStorage.setItem(CLE_STOCKAGE, serialiser(hist.present));
   } catch {
     // Stockage indisponible : la page fonctionne sans.
   }
 }
 
-let saisie: Saisie = charger() ?? saisieParDefaut();
+// --- Etat ------------------------------------------------------------------------
+
+// `hist.present` est la saisie courante : elle n'est jamais modifiee en place.
+let hist = historique(charger() ?? saisieParDefaut());
+let etat: EtatEdition = etatInitial(hist.present);
+let outil: OutilEquilibre = 'selection';
+const options = { grille: true, cotes: false, resultante: true };
+let survol: EtatEdition['enCours'] = null;
 let dernier: { donnees: DonneesEquilibre; resultat: ResultatEquilibre; svg: string } | null = null;
 
-// --- Editeurs -------------------------------------------------------------------
+// --- Rendu -----------------------------------------------------------------------
 
-function champ(liste: string, i: number, nom: string, valeur: string, largeur = ''): string {
-  return `<input type="text" inputmode="decimal" class="${largeur}" data-liste="${liste}" data-index="${i}" data-champ="${nom}" value="${echapper(valeur)}" aria-label="${nom}" />`;
+function afficherSegments(): void {
+  zones.segments.innerHTML = tableSegmentsHtml(hist.present, etat.choix);
 }
 
-function rendreSegments(): void {
-  const lignes = saisie.segments
-    .map(
-      (s: LigneSegment, i) =>
-        `<tr><td>${champ('segments', i, 'id', s.id, 'id')}</td>` +
-        (['x1', 'z1', 'x2', 'z2', 'e', 'gamma'] as const).map((k) => `<td>${champ('segments', i, k, s[k])}</td>`).join('') +
-        `<td><button type="button" class="retirer" data-action="retirer" data-liste="segments" data-index="${i}" aria-label="retirer">×</button></td></tr>`
-    )
-    .join('');
-  zones.segments.innerHTML =
-    '<table class="actions"><thead><tr><th>Id</th>' +
-    ['x_1', 'z_1', 'x_2', 'z_2'].map((t) => `<th>${notationHtml(t)}</th>`).join('') +
-    `<th>e (m)</th><th>${notationHtml('gamma (kN/m3)')}</th><th></th></tr></thead>` +
-    `<tbody>${lignes}</tbody></table>`;
+function afficherCharges(): void {
+  zones.charges.innerHTML = chargesHtml(hist.present, etat.choix);
 }
 
-const CHAMPS_CHARGE: Record<TypeCharge, [keyof LigneCharge, string][]> = {
-  ponctuelle: [['x', 'x'], ['z', 'z'], ['Fx', 'F_x →'], ['Fz', 'F_z ↓']],
-  lineaire: [['xa', 'x_A'], ['za', 'z_A'], ['xb', 'x_B'], ['zb', 'z_B'], ['qa', 'q_A'], ['qb', 'q_B']],
-  moment: [['M', 'M ↺ (kN.m)']],
-};
-
-/** Libelles des types de charge, jamais leur identifiant. */
-const LIBELLES_TYPE: Record<TypeCharge, string> = {
-  ponctuelle: 'ponctuelle',
-  lineaire: 'linéaire',
-  moment: 'moment',
-};
-
-function rendreCharges(): void {
-  zones.charges.innerHTML = saisie.charges
-    .map((c: LigneCharge, i) => {
-      const nature = `<select data-liste="charges" data-index="${i}" data-champ="nature" aria-label="nature">${['G', 'Q'].map((n) => `<option${n === c.nature ? ' selected' : ''}>${n}</option>`).join('')}</select>`;
-      const direction =
-        c.type === 'lineaire'
-          ? `<select data-liste="charges" data-index="${i}" data-champ="direction" aria-label="direction"><option value="verticale"${c.direction === 'verticale' ? ' selected' : ''}>verticale ↓</option><option value="horizontale"${c.direction === 'horizontale' ? ' selected' : ''}>horizontale →</option></select>`
-          : '';
-      const champs = CHAMPS_CHARGE[c.type]
-        .map(([k, lib]) => `<label class="mini"><span>${notationHtml(lib)}</span>${champ('charges', i, k, String(c[k]))}</label>`)
-        .join('');
-      return (
-        `<div class="ligne-charge"><div class="tete">${champ('charges', i, 'id', c.id, 'id')}<span class="type">${LIBELLES_TYPE[c.type]}</span>${nature}${direction}` +
-        `<button type="button" class="retirer" data-action="retirer" data-liste="charges" data-index="${i}" aria-label="retirer">×</button></div>` +
-        `<div class="champs">${champs}</div></div>`
-      );
-    })
-    .join('');
+function afficherElementChoisi(): void {
+  zones.elementChoisi.innerHTML = elementChoisiHtml(hist.present, etat.choix);
 }
 
 function ecrireChampsFixes(): void {
   for (const e of formulaire.querySelectorAll<HTMLInputElement>('[data-fixe]')) {
-    e.value = saisie[e.dataset.fixe as 'xg' | 'xd' | 'zb' | 'mu' | 'profondeur'];
+    const nom = e.dataset.fixe as 'xg' | 'xd' | 'zb' | 'mu' | 'profondeur';
+    e.value = hist.present[nom];
   }
 }
-
-// --- Calcul ---------------------------------------------------------------------
 
 function montrerErreur(m: string | null): void {
   zones.erreur.hidden = m === null;
   zones.erreur.innerHTML = m === null ? '' : notationHtml(m);
 }
 
+function dessinCourant(resultat: ResultatEquilibre | null): string {
+  const s = hist.present;
+  return dessinSaisie(s, resultat, vueDeSaisie(s, LARGEUR, HAUTEUR), LARGEUR, HAUTEUR, {
+    ...OPTIONS_EDITION,
+    choix: etat.choix,
+    grille: options.grille ? PAS_GRILLE : null,
+    cotes: options.cotes,
+    resultante: options.resultante,
+    enCours: etat.enCours,
+    survol,
+  });
+}
+
 function recalculer(): void {
-  memoriser();
-  const l = lireSaisie(saisie);
-  if (!l.ok) return montrerErreur(l.message);
+  const l = lireSaisie(hist.present);
+  if (!l.ok) {
+    dernier = null;
+    montrerErreur(l.message);
+    zones.resultat.innerHTML = '';
+    zones.verdicts.innerHTML = '';
+    zones.zone.innerHTML = dessinCourant(null);
+    return;
+  }
   let resultat: ResultatEquilibre;
   try {
     resultat = verifierEquilibre(l.donnees, PROFIL);
   } catch (e) {
-    zones.schema.innerHTML = schema(l.donnees, null);
-    return montrerErreur(messageDErreur(e));
+    dernier = null;
+    montrerErreur(messageDErreur(e));
+    zones.resultat.innerHTML = '';
+    zones.verdicts.innerHTML = '';
+    zones.zone.innerHTML = dessinCourant(null);
+    return;
   }
   montrerErreur(null);
-  const svg = schema(l.donnees, resultat);
+  const svg = dessinCourant(resultat);
   dernier = { donnees: l.donnees, resultat, svg };
-  zones.schema.innerHTML = svg;
+  zones.zone.innerHTML = svg;
   zones.resultat.innerHTML = rendreResultat(resultat);
+  zones.verdicts.innerHTML = verdictsHtml(resultat);
 }
 
-// --- Evenements -------------------------------------------------------------------
+function redessinerSvg(): void {
+  zones.zone.innerHTML = dessinCourant(dernier === null ? null : dernier.resultat);
+}
 
-formulaire.addEventListener('input', (ev) => {
-  const c = ev.target;
-  if (!(c instanceof HTMLInputElement || c instanceof HTMLSelectElement)) return;
-  if (c.dataset.fixe !== undefined) {
-    saisie[c.dataset.fixe as 'xg' | 'xd' | 'zb' | 'mu' | 'profondeur'] = c.value;
-    return recalculer();
-  }
-  const i = Number(c.dataset.index);
-  const champNom = c.dataset.champ;
-  if (champNom === undefined) return;
-  if (c.dataset.liste === 'segments') {
-    const s = saisie.segments[i];
-    if (s !== undefined) s[champNom as keyof LigneSegment] = c.value;
-  } else if (c.dataset.liste === 'charges') {
-    const ch = saisie.charges[i];
-    if (ch === undefined) return;
-    if (champNom === 'nature') ch.nature = c.value === 'Q' ? 'Q' : 'G';
-    else if (champNom === 'direction') ch.direction = c.value === 'horizontale' ? 'horizontale' : 'verticale';
-    else (ch as unknown as Record<string, string>)[champNom] = c.value;
-  }
-  recalculer();
-});
-formulaire.addEventListener('change', (ev) => {
-  if (ev.target instanceof HTMLSelectElement && ev.target !== selecteurExemple) ev.target.dispatchEvent(new Event('input', { bubbles: true }));
-});
-
-function toutRendre(): void {
-  rendreSegments();
-  rendreCharges();
+function toutRedessiner(): void {
+  memoriser();
+  afficherSegments();
+  afficherCharges();
+  afficherElementChoisi();
   ecrireChampsFixes();
   recalculer();
 }
 
-document.addEventListener('click', (ev) => {
-  const c = ev.target;
-  if (!(c instanceof HTMLElement)) return;
-  const action = c.dataset.action;
-  if (action === undefined) return;
+// --- Editeur ---------------------------------------------------------------------
+
+function synchroniserSelection(): void {
+  editeur.definirEtat({
+    ...editeur.etat(),
+    selection: selectionDeChoix(grapheDeSaisie(hist.present), etat.choix),
+  });
+}
+
+function adopter(suivante: Saisie): void {
+  hist = pousser(hist, suivante);
+  etat = { ...etat, saisie: suivante, enCours: null, glisse: null };
+  synchroniserSelection();
+  toutRedessiner();
+}
+
+function annuler(): void {
+  hist = annulerHistorique(hist);
+  etat = { ...etat, saisie: hist.present, enCours: null, glisse: null };
+  synchroniserSelection();
+  toutRedessiner();
+}
+
+function retablir(): void {
+  hist = retablirHistorique(hist);
+  etat = { ...etat, saisie: hist.present, enCours: null, glisse: null };
+  synchroniserSelection();
+  toutRedessiner();
+}
+
+function traiterAction(action: ActionEditeur): void {
+  if (action.type === 'annuler') return annuler();
+  if (action.type === 'retablir') return retablir();
+  if (action.type === 'survol') {
+    const p = action.point;
+    survol = action.point;
+    const texte = `x = ${texteNombre(p.x)} m · z = ${texteNombre(p.y)} m`;
+    zones.statut.textContent = action.noeud === null || action.noeud === undefined ? texte : `${texte} · aimanté sur ${action.noeud}`;
+    redessinerSvg();
+    return;
+  }
+  const resultat = appliquer(etat, action, outil);
+  if (resultat.avant !== null) hist = pousser({ ...hist, present: resultat.avant }, resultat.etat.saisie);
+  else hist = { ...hist, present: resultat.etat.saisie };
+  etat = resultat.etat;
+  synchroniserSelection();
+  toutRedessiner();
+}
+
+const editeur = brancherEditeur(zones.zone, {
+  contexte: () => ({
+    vue: vueDeSaisie(hist.present, LARGEUR, HAUTEUR),
+    outil: outilEditeur(outil),
+    graphe: grapheDeSaisie(hist.present),
+    pas: options.grille ? PAS_GRILLE : null,
+    tolerancePx: 8,
+  }),
+  surAction: (action) => traiterAction(action),
+});
+
+// --- Choix dans les tableaux -----------------------------------------------------
+
+/** Index de la ligne cliquee parmi les lignes du tableau du conteneur. */
+function indexDeLigne(porteur: HTMLElement, cible: HTMLElement): number {
+  const ligne = cible.closest('tr') ?? porteur.closest('tr');
+  const table = ligne === null ? null : ligne.closest('table');
+  if (ligne === null || table === null) return -1;
+  return [...table.querySelectorAll('tbody tr')].indexOf(ligne);
+}
+
+function choixDeLigne(porteur: HTMLElement, cible: HTMLElement): Choix {
+  const conteneur = porteur.closest<HTMLElement>('[data-role="segments"], [data-role="charges"]');
+  const liste = conteneur === null ? null : (conteneur.getAttribute('data-role') as 'segments' | 'charges');
+  const depuisListe = (i: number): Choix => (liste === null || !Number.isFinite(i) ? null : { liste, index: i });
+  const brut = (porteur.dataset.choix ?? '').trim();
+
+  if (brut === 'base') return { liste: 'base' };
+  if (/^\d+$/.test(brut)) {
+    const encode = depuisListe(Number(brut));
+    if (encode !== null) return encode;
+  }
+  if ((brut === 'segments' || brut === 'charges') && porteur.dataset.index !== undefined) {
+    return { liste: brut, index: Number(porteur.dataset.index) };
+  }
+  if (brut !== '') {
+    try {
+      const v: unknown = JSON.parse(brut);
+      if (typeof v === 'number') {
+        const parPosition = depuisListe(v);
+        if (parPosition !== null) return parPosition;
+      } else if (Array.isArray(v) && v.length === 2) {
+        const [l, i] = v;
+        if ((l === 'segments' || l === 'charges') && typeof i === 'number') return { liste: l, index: i };
+        if (l === 'base') return { liste: 'base' };
+      } else if (typeof v === 'object' && v !== null) {
+        const o = v as Record<string, unknown>;
+        if (o.liste === 'base') return { liste: 'base' };
+        if ((o.liste === 'segments' || o.liste === 'charges') && typeof o.index === 'number') {
+          return { liste: o.liste, index: o.index };
+        }
+      }
+    } catch {
+      // Pas du JSON : on tente les autres ecritures.
+    }
+    const m = /^(segments|charges)\s*[:/#-]\s*(\d+)$/.exec(brut);
+    if (m !== null) return { liste: m[1] as 'segments' | 'charges', index: Number(m[2]) };
+  }
+  return depuisListe(indexDeLigne(porteur, cible));
+}
+
+// --- Evenements ------------------------------------------------------------------
+
+function traiterBouton(c: HTMLElement, action: string): void {
+  if (action === 'annuler') return annuler();
+  if (action === 'retablir') return retablir();
   if (action === 'ajouter-segment') {
-    saisie.segments.push({ id: `S${saisie.segments.length + 1}`, x1: '0', z1: '0', x2: '0', z2: '1', e: '0,2', gamma: '25' });
-    return toutRendre();
+    const suivante = structuredClone(hist.present);
+    suivante.segments.push({ id: `S${suivante.segments.length + 1}`, x1: '0', z1: '0', x2: '0', z2: '1', e: '0,2', gamma: '25' });
+    return adopter(suivante);
   }
   if (action.startsWith('ajouter-')) {
-    const type = action.slice(8) as TypeCharge;
-    saisie.charges.push(charge({ type, id: `C${saisie.charges.length + 1}` }));
-    return toutRendre();
+    const type = action.slice('ajouter-'.length) as TypeCharge;
+    const suivante = structuredClone(hist.present);
+    suivante.charges.push(charge({ type, id: `C${suivante.charges.length + 1}` }));
+    return adopter(suivante);
   }
   if (action === 'retirer') {
     const i = Number(c.dataset.index);
-    if (c.dataset.liste === 'segments') saisie.segments.splice(i, 1);
-    else saisie.charges.splice(i, 1);
-    return toutRendre();
+    const suivante = structuredClone(hist.present);
+    if (c.dataset.liste === 'segments') suivante.segments.splice(i, 1);
+    else suivante.charges.splice(i, 1);
+    return adopter(suivante);
   }
-  if (action === 'enregistrer') return telecharger('equilibre-statique.json', serialiser(saisie), 'application/json;charset=utf-8');
+  if (action === 'enregistrer') {
+    memoriser();
+    return telecharger('equilibre-statique.json', serialiser(hist.present), 'application/json;charset=utf-8');
+  }
   if (!action.startsWith('exporter-')) return;
   if (dernier === null) return montrerErreur('Aucun calcul valide à exporter : corriger la saisie.');
   if (action === 'exporter-schema') telecharger('equilibre-schema.svg', svgAutonome(dernier.svg, STYLES_TRACE), 'image/svg+xml;charset=utf-8');
@@ -250,6 +367,60 @@ document.addEventListener('click', (ev) => {
       )
     );
   }
+}
+
+document.addEventListener('click', (ev) => {
+  const c = ev.target;
+  if (!(c instanceof HTMLElement)) return;
+  const action = c.dataset.action;
+  if (action !== undefined) return traiterBouton(c, action);
+  if (c.closest('button, input, select, textarea, a, label') !== null) return;
+  const porteur = c.closest<HTMLElement>('[data-choix]');
+  if (porteur === null) return;
+  const choix = choixDeLigne(porteur, c);
+  if (choix === null) return;
+  etat = { ...etat, choix };
+  synchroniserSelection();
+  toutRedessiner();
+});
+
+formulaire.addEventListener('change', (ev) => {
+  const c = ev.target;
+  if (!(c instanceof HTMLInputElement || c instanceof HTMLSelectElement)) return;
+  const fixe = c.dataset.fixe;
+  if (fixe !== undefined) {
+    return adopter(modifierChamp(hist.present, 'fixe', 0, fixe, c.value));
+  }
+  const liste = c.dataset.liste;
+  const champNom = c.dataset.champ;
+  if (liste === undefined || champNom === undefined) return;
+  const i = Number(c.dataset.index);
+  return adopter(modifierChamp(hist.present, liste as 'segments' | 'charges' | 'fixe', i, champNom, c.value));
+});
+
+for (const b of document.querySelectorAll<HTMLButtonElement>('[data-outil]')) {
+  b.addEventListener('click', () => {
+    outil = b.dataset.outil as OutilEquilibre;
+    for (const autre of document.querySelectorAll<HTMLElement>('[data-outil]')) {
+      autre.setAttribute('aria-pressed', String(autre === b));
+    }
+  });
+}
+
+sectionDessin.addEventListener('change', (ev) => {
+  const c = ev.target;
+  if (!(c instanceof HTMLInputElement)) return;
+  const nom = c.dataset.option;
+  if (nom !== 'grille' && nom !== 'cotes' && nom !== 'resultante') return;
+  options[nom] = c.checked;
+  redessinerSvg();
+});
+
+document.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'Escape') return;
+  etat = abandonner(etat);
+  synchroniserSelection();
+  toutRedessiner();
 });
 
 selecteurExemple.innerHTML =
@@ -257,10 +428,17 @@ selecteurExemple.innerHTML =
 selecteurExemple.addEventListener('change', () => {
   const ex = EXEMPLES[selecteurExemple.value];
   if (ex === undefined) return;
-  saisie = structuredClone(ex.saisie);
+  const copie = structuredClone(ex.saisie);
+  historiser(copie);
   selecteurExemple.value = '';
-  toutRendre();
 });
+
+function historiser(copie: Saisie): void {
+  hist = pousser(hist, copie);
+  etat = etatInitial(copie);
+  synchroniserSelection();
+  toutRedessiner();
+}
 
 exige<HTMLInputElement>('[data-role="ouvrir"]').addEventListener('change', async (e) => {
   const entree = e.target as HTMLInputElement;
@@ -268,16 +446,19 @@ exige<HTMLInputElement>('[data-role="ouvrir"]').addEventListener('change', async
   entree.value = '';
   if (f === undefined) return;
   try {
-    saisie = relire(await f.text());
+    historiser(relire(await f.text()));
   } catch (err) {
-    return montrerErreur(messageDErreur(err));
+    montrerErreur(messageDErreur(err));
   }
-  toutRendre();
 });
+
+// Styles du trace dans la page, comme le reste de la suite.
+document.head.insertAdjacentHTML('beforeend', `<style>${STYLES_TRACE}</style>`);
 
 zones.profil.innerHTML = tableauProfil(PROFIL);
 zones.hypotheses.innerHTML = HYPOTHESES.map((h) => `<li>${notationHtml(h)}</li>`).join('');
-toutRendre();
+toutRedessiner();
+synchroniserSelection();
 
 // Hors navigateur (tests), pas de service worker.
 if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {

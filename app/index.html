@@ -34,6 +34,8 @@
           <fieldset>
             <legend>Exemples et modèle</legend>
             <label><span>Partir d'un exemple</span><select data-role="exemple"></select></label>
+            <label><span>&mu;<sub>d</sub>, frottement de calcul à la base</span><input type="text" inputmode="decimal" data-fixe="mu" /></label>
+            <label><span>Profondeur prise en compte (m)</span><input type="text" inputmode="decimal" data-fixe="profondeur" /></label>
             <div class="boutons"><button type="button" data-action="enregistrer">Enregistrer (JSON)</button></div>
             <label class="large fichier"><span>Ouvrir un modèle</span><input type="file" accept="application/json,.json" data-role="ouvrir" /></label>
           </fieldset>
@@ -50,8 +52,6 @@
             <label><span>x<sub>g</sub>, arête gauche (m)</span><input type="text" inputmode="decimal" data-fixe="xg" /></label>
             <label><span>x<sub>d</sub>, arête droite (m)</span><input type="text" inputmode="decimal" data-fixe="xd" /></label>
             <label><span>z<sub>b</sub>, cote de la base (m)</span><input type="text" inputmode="decimal" data-fixe="zb" /></label>
-            <label><span>&mu;<sub>d</sub>, frottement de calcul à la base</span><input type="text" inputmode="decimal" data-fixe="mu" /></label>
-            <label><span>Profondeur prise en compte (m)</span><input type="text" inputmode="decimal" data-fixe="profondeur" /></label>
           </fieldset>
 
           <fieldset>
@@ -68,28 +68,54 @@
               <button type="button" data-action="ajouter-moment">+ moment</button>
             </div>
           </fieldset>
+
+          <fieldset data-role="element-choisi" aria-label="élément choisi"></fieldset>
         </form>
         <p data-role="erreur" class="erreur" role="alert" hidden></p>
       </section>
 
-      <div class="colonne">
-        <section aria-label="schema">
-          <h2>Schéma</h2>
-          <div data-role="schema" class="schema"></div>
-          <p class="note">Flèches pleines : actions permanentes ; tiretées : variables ; point bleu : résultante caractéristique sur la base.</p>
-        </section>
-        <section aria-label="verifications">
-          <h2>Vérifications</h2>
-          <div data-role="resultat"></div>
-        </section>
-        <section aria-label="coefficients">
-          <h2>Coefficients partiels</h2>
-          <div data-role="profil"></div>
-          <h3>Hypothèses</h3>
-          <ul class="note" data-role="hypotheses"></ul>
-        </section>
+      <section id="dessin" aria-label="dessin">
+        <h2>Dessin</h2>
+        <div class="outils" data-role="outils">
+          <button type="button" data-outil="selection" aria-pressed="true">Sélection</button>
+          <button type="button" data-outil="segment" aria-pressed="false">Segment</button>
+          <button type="button" data-outil="ponctuelle" aria-pressed="false">Ponctuelle</button>
+          <button type="button" data-outil="lineaire" aria-pressed="false">Linéaire</button>
+          <button type="button" data-outil="moment" aria-pressed="false">Moment</button>
+          <button type="button" data-outil="base" aria-pressed="false">Base</button>
+          <button type="button" data-outil="supprimer" aria-pressed="false">Supprimer</button>
+          <button type="button" data-action="annuler">Annuler</button>
+          <button type="button" data-action="retablir">Rétablir</button>
+        </div>
+        <div class="options">
+          <label><input type="checkbox" data-option="grille" checked /> Grille</label>
+          <label><input type="checkbox" data-option="cotes" /> Cotes</label>
+          <label><input type="checkbox" data-option="resultante" checked /> Résultante</label>
+        </div>
+        <svg data-role="zone" viewBox="0 0 640 520" role="img" aria-label="dessin de la saisie"></svg>
+        <div data-role="geste" class="note">
+          Clic : poser un point · glisser une ancre : la déplacer · Ctrl+Z / Ctrl+Y : annuler / rétablir · Échap : abandonner le tracé.
+        </div>
+        <div data-role="statut" class="statut" aria-live="off"></div>
+        <div data-role="volets">
+          <section aria-label="verifications">
+            <h3>Vérifications</h3>
+            <div data-role="resultat"></div>
+          </section>
+          <section aria-label="coefficients">
+            <h3>Coefficients partiels</h3>
+            <div data-role="profil"></div>
+            <h4>Hypothèses</h4>
+            <ul class="note" data-role="hypotheses"></ul>
+          </section>
+        </div>
+      </section>
+
+      <section id="verdicts" aria-label="verdicts">
+        <h2>Verdicts</h2>
+        <div data-role="liste-verdicts"></div>
         <section id="sorties" aria-label="sorties">
-          <h2>Sorties</h2>
+          <h3>Sorties</h3>
           <label class="mini"><span>Projet</span><input type="text" data-role="projet" /></label>
           <label class="mini"><span>Élément</span><input type="text" data-role="element" placeholder="vide = Équilibre statique" /></label>
           <div class="boutons">
@@ -98,7 +124,7 @@
             <button type="button" data-action="exporter-note">Note de calcul (HTML imprimable)</button>
           </div>
         </section>
-      </div>
+      </section>
     </main>
 
     <footer>
