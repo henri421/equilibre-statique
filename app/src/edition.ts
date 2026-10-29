@@ -5,7 +5,7 @@
  * Module PUR, sans DOM : la saisie n'est jamais modifiee en place.
  */
 
-import { lireNombre, prochainId } from 'aedificium-ui';
+import { langueCourante, lireNombre, prochainId } from 'aedificium-ui';
 import type {
   ActionEditeur,
   BarreGraphe,
@@ -50,13 +50,14 @@ const CHAMPS_SEGMENT = ['id', 'x1', 'z1', 'x2', 'z2', 'e', 'gamma'];
 const CHAMPS_CHARGE = ['id', 'nature', 'x', 'z', 'Fx', 'Fz', 'xa', 'za', 'xb', 'zb', 'qa', 'qb', 'direction', 'M'];
 const CHAMPS_FIXE = ['xg', 'xd', 'zb', 'mu', 'profondeur'];
 
-/** Arrondi au millieme, virgule decimale, sans zeros inutiles ni « -0 ». */
+/** Arrondi au millieme, virgule decimale (point en anglais), sans zeros inutiles ni « -0 ». */
 export function texteNombre(v: number): string {
-  if (!Number.isFinite(v)) return String(v).replace('.', ',');
+  const sep = langueCourante() === 'en' ? '.' : ',';
+  if (!Number.isFinite(v)) return String(v).replace('.', sep);
   let t = v.toFixed(3);
   if (t.includes('.')) t = t.replace(/0+$/, '').replace(/\.$/, '');
   if (t === '-0') t = '0';
-  return t.replace('.', ',');
+  return t.replace('.', sep);
 }
 
 function memePoint(a: Point, b: Point): boolean {

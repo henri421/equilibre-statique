@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="theme-color" content="#f7f7f6" />
+    <link rel="icon" href="../icone.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="../icone-192.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Static equilibrium — overturning, sliding, uplift</title>
+  </head>
+  <body>
+    <nav class="barre" aria-label="suite of tools">
+      <div class="barre-corps">
+        <span class="barre-nom">Aedificium &middot; Equilibrium</span>
+        <div class="barre-actions">
+          <a class="barre-lien" href="https://henri421.github.io/WebAedificium/" target="_blank" rel="noopener">Aedificium suite &#8599;</a>
+          <a class="barre-langue" href="../" hreflang="fr" lang="fr" aria-label="Version française">FR</a>
+        </div>
+      </div>
+    </nav>
+
+    <header>
+      <h1>Static equilibrium</h1>
+      <p class="sous-titre">
+        Static equilibrium of a plane element at the ULS: lever arms, stabilising and destabilising actions,
+        overturning (EQU), sliding, uplift (UPL) and position of the resultant on the base.
+      </p>
+      <p class="avertissement">
+        Recommended factors of EN 1990 and EN 1997-1; the National Annex may modify them. Only equilibrium is
+        verified: neither the bearing resistance of the ground nor the resistance of the members.
+      </p>
+    </header>
+
+    <main>
+      <section id="saisie" aria-label="input">
+        <form id="formulaire" autocomplete="off">
+          <fieldset>
+            <legend>Examples and model</legend>
+            <label><span>Start from an example</span><select data-role="exemple"></select></label>
+            <label><span>&mu;<sub>d</sub>, design friction coefficient at the base</span><input type="text" inputmode="decimal" data-fixe="mu" /></label>
+            <label><span>Depth taken into account (m)</span><input type="text" inputmode="decimal" data-fixe="profondeur" /></label>
+            <div class="boutons"><button type="button" data-action="enregistrer">Save (JSON)</button></div>
+            <label class="large fichier"><span>Open a model</span><input type="file" accept="application/json,.json" data-role="ouvrir" /></label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Weighted segments</legend>
+            <p class="note">Axis from (x<sub>1</sub> ; z<sub>1</sub>) to (x<sub>2</sub> ; z<sub>2</sub>) in m, z upwards; thickness e perpendicular to the axis; self-weight calculated.</p>
+            <div class="defilement" data-role="segments"></div>
+            <div class="boutons"><button type="button" data-action="ajouter-segment">+ segment</button></div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Base</legend>
+            <label><span>x<sub>g</sub>, left edge (m)</span><input type="text" inputmode="decimal" data-fixe="xg" /></label>
+            <label><span>x<sub>d</sub>, right edge (m)</span><input type="text" inputmode="decimal" data-fixe="xd" /></label>
+            <label><span>z<sub>b</sub>, level of the base (m)</span><input type="text" inputmode="decimal" data-fixe="zb" /></label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Loads</legend>
+            <p class="note">
+              Vertical loads positive downwards, horizontal loads towards +x, moments anticlockwise. A linear load goes
+              from q<sub>A</sub> at A to q<sub>B</sub> at B, per metre of length of AB: uniform, triangular or
+              trapezoidal.
+            </p>
+            <div data-role="charges"></div>
+            <div class="boutons">
+              <button type="button" data-action="ajouter-ponctuelle">+ point</button>
+              <button type="button" data-action="ajouter-lineaire">+ uniform / triangular / trapezoidal</button>
+              <button type="button" data-action="ajouter-moment">+ moment</button>
+            </div>
+          </fieldset>
+
+          <fieldset data-role="element-choisi" aria-label="selected element"></fieldset>
+        </form>
+        <p data-role="erreur" class="erreur" role="alert" hidden></p>
+      </section>
+
+      <section id="dessin" aria-label="drawing">
+        <h2>Drawing</h2>
+        <div class="outils" data-role="outils">
+          <button type="button" data-outil="selection" aria-pressed="true">Select</button>
+          <button type="button" data-outil="segment" aria-pressed="false">Segment</button>
+          <button type="button" data-outil="ponctuelle" aria-pressed="false">Point</button>
+          <button type="button" data-outil="lineaire" aria-pressed="false">Linear</button>
+          <button type="button" data-outil="moment" aria-pressed="false">Moment</button>
+          <button type="button" data-outil="base" aria-pressed="false">Base</button>
+          <button type="button" data-outil="supprimer" aria-pressed="false">Delete</button>
+          <button type="button" data-action="annuler">Undo</button>
+          <button type="button" data-action="retablir">Redo</button>
+        </div>
+        <div class="options">
+          <label><input type="checkbox" data-option="grille" checked /> Grid</label>
+          <label><input type="checkbox" data-option="cotes" /> Dimensions</label>
+          <label><input type="checkbox" data-option="resultante" checked /> Resultant</label>
+        </div>
+        <svg data-role="zone" viewBox="0 0 640 520" role="img" aria-label="drawing of the input"></svg>
+        <div data-role="geste" class="note">
+          Click: place a point · drag an anchor: move it · Ctrl+Z / Ctrl+Y: undo / redo · Esc: abandon the drawing.
+        </div>
+        <div data-role="statut" class="statut" aria-live="off"></div>
+        <div data-role="volets">
+          <section aria-label="verifications">
+            <h3>Verifications</h3>
+            <div data-role="resultat"></div>
+          </section>
+          <section aria-label="factors">
+            <h3>Partial factors</h3>
+            <div data-role="profil"></div>
+            <h4>Assumptions</h4>
+            <ul class="note" data-role="hypotheses"></ul>
+          </section>
+        </div>
+      </section>
+
+      <section id="verdicts" aria-label="verdicts">
+        <h2>Verdicts</h2>
+        <div data-role="liste-verdicts"></div>
+        <section id="sorties" aria-label="outputs">
+          <h3>Outputs</h3>
+          <label class="mini"><span>Project</span><input type="text" data-role="projet" /></label>
+          <label class="mini"><span>Element</span><input type="text" data-role="element" placeholder="empty = Static equilibrium" /></label>
+          <div class="boutons">
+            <button type="button" data-action="exporter-schema">Diagram (SVG)</button>
+            <button type="button" data-action="exporter-csv">Results (CSV)</button>
+            <button type="button" data-action="exporter-note">Calculation note (printable HTML)</button>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <footer>
+      <p>Part of the <a href="https://henri421.github.io/WebAedificium/">Aedificium</a> suite. Fully local calculation.</p>
+    </footer>
+
+    <script type="module" src="../src/main.ts"></script>
+  </body>
+</html>

@@ -11,6 +11,7 @@ import type { DonneesEquilibre, ResultatEquilibre } from '../../src/index';
 import { grapheDeSaisie } from './edition';
 import type { Choix } from './edition';
 import type { Saisie } from './modele';
+import { phrase, textes } from './textes';
 
 interface Cadre {
   echelle: number;
@@ -71,7 +72,7 @@ export function schema(d: DonneesEquilibre, r: ResultatEquilibre | null): string
 
   // Base et aretes de basculement.
   parts.push(`<line class="base" x1="${X(d.base.xg)}" y1="${Y(d.base.z)}" x2="${X(d.base.xd)}" y2="${Y(d.base.z)}" />`);
-  for (const [x, nom] of [[d.base.xg, 'arête gauche'], [d.base.xd, 'arête droite']] as const) {
+  for (const [x, nom] of [[d.base.xg, textes().arete('gauche')], [d.base.xd, textes().arete('droite')]] as const) {
     parts.push(`<circle class="pivot" cx="${X(x)}" cy="${Y(d.base.z)}" r="5" /><text class="etiquette" x="${X(x)}" y="${(Y(d.base.z) + 18).toFixed(1)}" text-anchor="middle">${notationSvg(nom)}</text>`);
   }
 
@@ -104,7 +105,7 @@ export function schema(d: DonneesEquilibre, r: ResultatEquilibre | null): string
     for (const e of r.elementaires) {
       if (e.C !== 0 || e.origine.startsWith('poids de')) continue;
       if (e.origine.includes('triangle')) {
-        parts.push(`<circle class="point-resultante" cx="${X(e.x).toFixed(1)}" cy="${Y(e.z).toFixed(1)}" r="3"><title>${notationSvg(e.origine)}</title></circle>`);
+        parts.push(`<circle class="point-resultante" cx="${X(e.x).toFixed(1)}" cy="${Y(e.z).toFixed(1)}" r="3"><title>${notationSvg(phrase(e.origine))}</title></circle>`);
         continue;
       }
       const n = Math.hypot(e.Fx, e.Fz) || 1;
@@ -128,7 +129,7 @@ export function schema(d: DonneesEquilibre, r: ResultatEquilibre | null): string
   }
 
   return (
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${largeur.toFixed(0)} ${hauteur.toFixed(0)}" role="img" aria-label="schéma de l'élément">` +
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${largeur.toFixed(0)} ${hauteur.toFixed(0)}" role="img" aria-label="${textes().dessin.schema}">` +
     '<defs><marker id="pointe" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="pointe" /></marker></defs>' +
     parts.join('') +
     '</svg>'

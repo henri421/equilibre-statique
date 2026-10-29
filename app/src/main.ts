@@ -8,6 +8,8 @@
 import {
   annuler as annulerHistorique,
   brancherEditeur,
+  definirLangue,
+  langueDuDocument,
   historique,
   noteDeCalculHtml,
   notationHtml,
@@ -21,11 +23,11 @@ import {
   type Vue,
 } from 'aedificium-ui';
 import { profilRecommande, verifierEquilibre, type DonneesEquilibre, type ResultatEquilibre } from '../../src/index';
-import { EXEMPLES, charge, lireSaisie, relire, saisieParDefaut, serialiser, type Saisie, type TypeCharge } from './modele';
+import { EXEMPLES, charge, exemple, lireSaisie, relire, saisieParDefaut, serialiser, type Saisie, type TypeCharge } from './modele';
 import { messageDErreur, rendreResultat, tableauProfil, verdictsHtml } from './vue';
 import { OPTIONS_EDITION, dessinSaisie, vueDeSaisie } from './dessin';
 import { STYLES_TRACE, resultatEnCsv } from './export';
-import { HYPOTHESES, noteDuCalcul } from './note';
+import { noteDuCalcul } from './note';
 import {
   abandonner,
   appliquer,
@@ -40,7 +42,10 @@ import {
   type OutilEquilibre,
 } from './edition';
 import { chargesHtml, elementChoisiHtml, tableSegmentsHtml } from './form';
+import { textes } from './textes';
 import './style.css';
+
+definirLangue(langueDuDocument(document));
 
 const PROFIL = profilRecommande();
 const CLE_STOCKAGE = 'equilibre-statique/saisie';
@@ -260,7 +265,7 @@ function traiterAction(action: ActionEditeur): void {
     const p = action.point;
     survol = action.point;
     const texte = `x = ${texteNombre(p.x)} m · z = ${texteNombre(p.y)} m`;
-    zones.statut.textContent = action.noeud === null || action.noeud === undefined ? texte : `${texte} · aimanté sur ${action.noeud}`;
+    zones.statut.textContent = action.noeud === null || action.noeud === undefined ? texte : `${texte} · ${textes().messages.aimante(action.noeud)}`;
     redessinerSvg();
     return;
   }
@@ -340,7 +345,7 @@ function traiterBouton(c: HTMLElement, action: string): void {
   if (action === 'retablir') return retablir();
   if (action === 'ajouter-segment') {
     const suivante = structuredClone(hist.present);
-    suivante.segments.push({ id: `S${suivante.segments.length + 1}`, x1: '0', z1: '0', x2: '0', z2: '1', e: '0,2', gamma: '25' });
+    suivante.segments.push({ id: `S${suivante.segments.length + 1}`, x1: '0', z1: '0', x2: '0', z2: '1', e: texteNombre(0.2), gamma: '25' });
     return adopter(suivante);
   }
   if (action.startsWith('ajouter-')) {
@@ -361,7 +366,7 @@ function traiterBouton(c: HTMLElement, action: string): void {
     return telecharger('equilibre-statique.json', serialiser(hist.present), 'application/json;charset=utf-8');
   }
   if (!action.startsWith('exporter-')) return;
-  if (dernier === null) return montrerErreur('Aucun calcul valide à exporter : corriger la saisie.');
+  if (dernier === null) return montrerErreur(textes().messages.rienAExporter);
   if (action === 'exporter-schema') telecharger('equilibre-schema.svg', svgAutonome(dernier.svg, STYLES_TRACE), 'image/svg+xml;charset=utf-8');
   else if (action === 'exporter-csv') telecharger('equilibre-resultats.csv', resultatEnCsv(dernier.resultat), 'text/csv;charset=utf-8');
   else if (action === 'exporter-note') {
@@ -434,12 +439,14 @@ document.addEventListener('keydown', (ev) => {
 });
 
 selecteurExemple.innerHTML =
-  '<option value="">— exemple —</option>' + Object.entries(EXEMPLES).map(([k, e]) => `<option value="${k}">${notationTexte(e.libelle)}</option>`).join('');
+  `<option value="">${textes().messages.exemple}</option>` +
+  Object.keys(EXEMPLES)
+    .map((k) => `<option value="${k}">${notationTexte(exemple(k)?.libelle ?? k)}</option>`)
+    .join('');
 selecteurExemple.addEventListener('change', () => {
-  const ex = EXEMPLES[selecteurExemple.value];
+  const ex = exemple(selecteurExemple.value);
   if (ex === undefined) return;
-  const copie = structuredClone(ex.saisie);
-  historiser(copie);
+  historiser(ex.saisie);
   selecteurExemple.value = '';
 });
 
@@ -466,7 +473,7 @@ exige<HTMLInputElement>('[data-role="ouvrir"]').addEventListener('change', async
 document.head.insertAdjacentHTML('beforeend', `<style>${STYLES_TRACE}</style>`);
 
 zones.profil.innerHTML = tableauProfil(PROFIL);
-zones.hypotheses.innerHTML = HYPOTHESES.map((h) => `<li>${notationHtml(h)}</li>`).join('');
+zones.hypotheses.innerHTML = textes().note.hypotheses.map((h) => `<li>${notationHtml(h)}</li>`).join('');
 toutRedessiner();
 synchroniserSelection();
 

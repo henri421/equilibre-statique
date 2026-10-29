@@ -2,8 +2,9 @@
  * La saisie (chaines) et sa lecture en donnees du noyau. PUR, sans DOM.
  */
 
-import { lireNombre } from 'aedificium-ui';
+import { langueCourante, lireNombre } from 'aedificium-ui';
 import type { Charge, DonneesEquilibre, NatureAction, Segment } from '../../src/index';
+import { textes } from './textes';
 
 export interface LigneSegment {
   id: string;
@@ -87,15 +88,45 @@ export const EXEMPLES: Record<string, { libelle: string; saisie: Saisie }> = {
   },
 };
 
+/**
+ * Un exemple dans la langue de la page : en anglais, libelle et identifiants
+ * traduits, nombres a point decimal. En francais, une copie de `EXEMPLES`.
+ */
+export function exemple(cle: string): { libelle: string; saisie: Saisie } | undefined {
+  const ex = EXEMPLES[cle];
+  if (ex === undefined) return undefined;
+  const saisie = structuredClone(ex.saisie);
+  if (langueCourante() === 'fr') return { libelle: ex.libelle, saisie };
+  const t = textes();
+  const nombre = (v: string) => v.replace(',', '.');
+  const id = (v: string) => t.ids[v] ?? v;
+  return {
+    libelle: t.exemples[cle] ?? ex.libelle,
+    saisie: {
+      segments: saisie.segments.map((x) => ({ id: id(x.id), x1: nombre(x.x1), z1: nombre(x.z1), x2: nombre(x.x2), z2: nombre(x.z2), e: nombre(x.e), gamma: nombre(x.gamma) })),
+      charges: saisie.charges.map((x) => {
+        const c: LigneCharge = { ...x, id: id(x.id) };
+        for (const k of ['x', 'z', 'Fx', 'Fz', 'xa', 'za', 'xb', 'zb', 'qa', 'qb', 'M'] as const) c[k] = nombre(x[k]);
+        return c;
+      }),
+      xg: nombre(saisie.xg),
+      xd: nombre(saisie.xd),
+      zb: nombre(saisie.zb),
+      mu: nombre(saisie.mu),
+      profondeur: nombre(saisie.profondeur),
+    },
+  };
+}
+
 export function saisieParDefaut(): Saisie {
-  return structuredClone(EXEMPLES['mur-poids'].saisie);
+  return (exemple('mur-poids') as { saisie: Saisie }).saisie;
 }
 
 export type Lecture = { ok: true; donnees: DonneesEquilibre } | { ok: false; message: string };
 
 function n(v: string, quoi: string): number {
   const x = lireNombre(v);
-  if (x === null) throw new Error(`${quoi} : nombre attendu, reçu « ${v} ».`);
+  if (x === null) throw new Error(textes().messages.nombreAttendu(quoi, v));
   return x;
 }
 
@@ -129,7 +160,7 @@ export function lireSaisie(s: Saisie): Lecture {
         charges,
         base: { xg: n(s.xg, 'x_g'), xd: n(s.xd, 'x_d'), z: n(s.zb, 'z_b') },
         mu: n(s.mu, 'mu_d'),
-        profondeur: n(s.profondeur, 'profondeur'),
+        profondeur: n(s.profondeur, textes().messages.profondeur),
       },
     };
   } catch (e) {
@@ -145,7 +176,7 @@ export function serialiser(s: Saisie): string {
 
 export function relire(texte: string): Saisie {
   const brut = JSON.parse(texte) as Record<string, unknown>;
-  if (brut.format !== FORMAT) throw new Error(`Fichier de format ${JSON.stringify(brut.format)} : attendu ${FORMAT}.`);
+  if (brut.format !== FORMAT) throw new Error(textes().messages.format(JSON.stringify(brut.format), FORMAT));
   const d = saisieParDefaut();
   const t = (v: unknown, def: string) => (typeof v === 'string' ? v : def);
   const segs = Array.isArray(brut.segments) ? (brut.segments as Record<string, unknown>[]) : [];
