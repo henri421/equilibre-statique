@@ -22,6 +22,51 @@ export function verdictHtml(r: ResultatEquilibre): string {
   return `<p class="verdict verdict-${r.verdict}">${r.verdict === 'conforme' ? 'Équilibre assuré' : 'Équilibre non assuré'}</p><p class="motif">${notationHtml(r.motif)}</p>`;
 }
 
+/** Une carte de verdict : etat, jauge, taux et detail. Les etats valent ok ou refus. */
+function carteVerdict(cle: string, titre: string, clause: string, taux: number | null, detail: string): string {
+  const etat = taux === null ? '' : taux <= 1 ? ' ok' : ' refus';
+  const jauge =
+    taux === null
+      ? ''
+      : `<div class="jauge"><i style="width:${Math.round(Math.min(100, taux * 100))}%"></i></div><span class="taux">${tauxAffiche(taux)}</span>`;
+  return `<div class="verdict${etat}" data-verif="${cle}"><h3>${titre} <span class="clause">${clause}</span></h3>${jauge}<p>${detail}</p></div>`;
+}
+
+/** Les cartes de verdicts, dans l'ordre de l'ecran : renversement, glissement, soulevement, resultante. */
+export function verdictsHtml(r: ResultatEquilibre): string {
+  const renversement = (pivot: 'gauche' | 'droite'): string => {
+    const x = r.renversement.find((y) => y.pivot === pivot);
+    if (x === undefined) return '';
+    return carteVerdict(
+      `renversement-${pivot}`,
+      pivot === 'gauche' ? 'Renversement, arête gauche' : 'Renversement, arête droite',
+      'EQU',
+      x.taux,
+      notationHtml(`M_dst,d = ${f(x.M_dst_d)} kN.m ; M_stb,d = ${f(x.M_stb_d)} kN.m`)
+    );
+  };
+  const g = r.glissement;
+  return (
+    renversement('gauche') +
+    renversement('droite') +
+    carteVerdict(
+      'glissement',
+      `Glissement vers ${g.sens > 0 ? '+x' : '−x'}`,
+      'STR/GEO',
+      g.taux,
+      notationHtml(`H_d = ${f(g.H_d)} kN ; R_d = ${f(g.R_d)} kN`)
+    ) +
+    carteVerdict(
+      'soulevement',
+      'Soulèvement',
+      'UPL',
+      r.soulevement.taux,
+      notationHtml(`V_dst,d = ${f(r.soulevement.V_dst_d)} kN ; V_stb,d = ${f(r.soulevement.V_stb_d)} kN`)
+    ) +
+    `<div class="verdict" data-verif="resultante"><h3>Résultante sur la base <span class="clause">indication</span></h3><p>${notationHtml(texteExcentricite(r))}</p></div>`
+  );
+}
+
 /** Tableau de synthese des verifications. */
 export function tableauSynthese(r: ResultatEquilibre): string {
   const g = r.glissement;
