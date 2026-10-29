@@ -18,6 +18,7 @@ import {
   svgAutonome,
   telecharger,
   type ActionEditeur,
+  type Vue,
 } from 'aedificium-ui';
 import { profilRecommande, verifierEquilibre, type DonneesEquilibre, type ResultatEquilibre } from '../../src/index';
 import { EXEMPLES, charge, lireSaisie, relire, saisieParDefaut, serialiser, type Saisie, type TypeCharge } from './modele';
@@ -158,9 +159,18 @@ function montrerErreur(m: string | null): void {
   zones.erreur.innerHTML = m === null ? '' : notationHtml(m);
 }
 
+// Pendant un glisse, la vue reste celle du debut : recadree a chaque
+// deplacement, elle ferait courir le point moins vite que le pointeur.
+let vueFigee: Vue | null = null;
+
+function vueCourante(): Vue {
+  if (etat.glisse === null || vueFigee === null) vueFigee = vueDeSaisie(hist.present, LARGEUR, HAUTEUR);
+  return vueFigee;
+}
+
 function dessinCourant(resultat: ResultatEquilibre | null): string {
   const s = hist.present;
-  return dessinSaisie(s, resultat, vueDeSaisie(s, LARGEUR, HAUTEUR), LARGEUR, HAUTEUR, {
+  return dessinSaisie(s, resultat, vueCourante(), LARGEUR, HAUTEUR, {
     ...OPTIONS_EDITION,
     choix: etat.choix,
     grille: options.grille ? PAS_GRILLE : null,
@@ -264,7 +274,7 @@ function traiterAction(action: ActionEditeur): void {
 
 const editeur = brancherEditeur(zones.zone, {
   contexte: () => ({
-    vue: vueDeSaisie(hist.present, LARGEUR, HAUTEUR),
+    vue: vueCourante(),
     outil: outilEditeur(outil),
     graphe: grapheDeSaisie(hist.present),
     pas: options.grille ? PAS_GRILLE : null,

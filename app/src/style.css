@@ -138,6 +138,7 @@ h2 {
 main {
   display: grid;
   grid-template-columns: 25rem minmax(0, 1fr) 19rem;
+  max-width: 100rem;
   gap: 1rem;
   align-items: start;
 }
@@ -209,7 +210,7 @@ section {
   margin-bottom: 1rem;
 }
 
-@media (max-width: 60rem) {
+@media (max-width: 75rem) {
   main {
     grid-template-columns: minmax(0, 1fr);
   }
@@ -546,18 +547,6 @@ footer {
   font-size: 0.72rem;
 }
 
-/* Les tableaux de moments ont sept colonnes : la colonne des resultats est
-   la plus large, la saisie se contente de 30 rem. */
-main {
-  grid-template-columns: minmax(20rem, 30rem) minmax(0, 1fr);
-}
-
-@media (max-width: 60rem) {
-  main {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
 /* --- Charges -------------------------------------------------------------- */
 
 .ligne-charge {
@@ -655,3 +644,90 @@ select {
 fieldset {
   min-width: 0;
 }
+
+/* --- Cartes de verdicts (colonne de droite), comme MBT --- */
+
+[data-role='liste-verdicts'] .verdict {
+  font-weight: 400;
+  margin-bottom: 0.7rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--bordure);
+  border-left-width: 4px;
+  border-radius: var(--rayon);
+  background: var(--surface);
+}
+
+[data-role='liste-verdicts'] .verdict.ok {
+  border-left-color: var(--ok);
+}
+
+[data-role='liste-verdicts'] .verdict.alerte {
+  border-left-color: var(--alerte);
+}
+
+[data-role='liste-verdicts'] .verdict.refus {
+  border-left-color: var(--refus);
+}
+
+[data-role='liste-verdicts'] .verdict h3 {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+[data-role='liste-verdicts'] .verdict .clause {
+  font-weight: 400;
+  font-size: 0.78rem;
+  color: var(--texte-faible);
+}
+
+[data-role='liste-verdicts'] .verdict p {
+  margin: 0.2rem 0;
+  font-size: 0.82rem;
+  color: var(--texte-doux);
+}
+
+[data-role='liste-verdicts'] .jauge {
+  height: 0.45rem;
+  margin: 0.35rem 0 0.15rem;
+  border-radius: 2px;
+  background: var(--surface-appui);
+  overflow: hidden;
+}
+
+[data-role='liste-verdicts'] .jauge i {
+  display: block;
+  height: 100%;
+}
+
+[data-role='liste-verdicts'] .ok .jauge i {
+  background: var(--ok);
+}
+
+[data-role='liste-verdicts'] .alerte .jauge i {
+  background: var(--alerte);
+}
+
+[data-role='liste-verdicts'] .refus .jauge i {
+  background: var(--refus);
+}
+
+[data-role='liste-verdicts'] .taux {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+}
+
+[data-role='liste-verdicts'] .ok .taux {
+  color: var(--ok);
+}
+
+[data-role='liste-verdicts'] .alerte .taux {
+  color: var(--alerte);
+}
+
+[data-role='liste-verdicts'] .refus .taux {
+  color: var(--refus);
+}
+
