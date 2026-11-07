@@ -8,6 +8,7 @@
 import {
   annuler as annulerHistorique,
   brancherEditeur,
+  brancherFeuilles,
   definirLangue,
   langueDuDocument,
   historique,
@@ -20,6 +21,8 @@ import {
   svgAutonome,
   telecharger,
   type ActionEditeur,
+  type BarreFeuilles,
+  type Json,
   type Vue,
 } from 'aedificium-ui';
 import { profilRecommande, verifierEquilibre, type DonneesEquilibre, type ResultatEquilibre } from '../../src/index';
@@ -133,6 +136,12 @@ function memoriser(): void {
 // `hist.present` est la saisie courante : elle n'est jamais modifiee en place.
 let hist = historique(charger() ?? saisieParDefaut());
 let etat: EtatEdition = etatInitial(hist.present);
+
+/**
+ * Feuilles de calcul d'un projet de la suite. Dans un projet, chaque saisie
+ * va dans la feuille courante, pas dans la memoire « hors projet » de l'app.
+ */
+let barre: BarreFeuilles | null = null;
 let outil: OutilEquilibre = 'selection';
 const options = { grille: true, cotes: false, resultante: true };
 let survol: EtatEdition['enCours'] = null;
@@ -220,7 +229,8 @@ function redessinerSvg(): void {
 }
 
 function toutRedessiner(): void {
-  memoriser();
+  if (barre?.dansUnProjet()) barre.signaler();
+  else memoriser();
   afficherSegments();
   afficherCharges();
   afficherElementChoisi();
@@ -474,6 +484,20 @@ document.head.insertAdjacentHTML('beforeend', `<style>${STYLES_TRACE}</style>`);
 
 zones.profil.innerHTML = tableauProfil(PROFIL);
 zones.hypotheses.innerHTML = textes().note.hypotheses.map((h) => `<li>${notationHtml(h)}</li>`).join('');
+
+barre = brancherFeuilles({
+  app: 'equilibre-statique',
+  nomApp: exige<HTMLElement>('header h1').textContent ?? 'equilibre-statique',
+  conteneur: exige<HTMLElement>('[data-role="feuilles"]'),
+  lire: () => JSON.parse(serialiser(hist.present)) as Json,
+  charger: (d) => {
+    hist = historique(d === null ? saisieParDefaut() : relire(JSON.stringify(d)));
+    etat = etatInitial(hist.present);
+    toutRedessiner();
+    synchroniserSelection();
+  },
+});
+
 toutRedessiner();
 synchroniserSelection();
 

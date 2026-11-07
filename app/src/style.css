@@ -58,7 +58,8 @@ body {
 
 header,
 main,
-footer {
+footer,
+.feuilles {
   max-width: 68rem;
   margin: 0 auto;
   padding: 0 1rem;
@@ -751,5 +752,13 @@ fieldset {
 
 [data-role='liste-verdicts'] .refus .taux {
   color: var(--refus);
+}
+
+/* Barre des feuilles de calcul (projets de la suite) : alignee sur la page. */
+.feuilles {
+  margin-top: 0.8rem;
+}
+.feuilles:empty {
+  display: none;
 }
 
