@@ -11,6 +11,7 @@ import { verifierEquilibre, type DonneesEquilibre, type ProfilEquilibre, type Re
 import { schema } from './dessin';
 import { descriptionCharge, sens, texteExcentricite } from './vue';
 import { phrase, textes } from './textes';
+import { VERSION_OUTIL } from './version';
 
 /** Hypotheses et limites, en francais (tests) ; l'ecran lit `textes().note.hypotheses`. */
 export const HYPOTHESES = textes().note.hypotheses;
@@ -113,6 +114,7 @@ export function noteDuCalcul(profil: ProfilEquilibre, d: DonneesEquilibre, carto
   const t = textes();
   return {
     cartouche: {
+      version: VERSION_OUTIL,
       projet: cartouche.projet,
       element: cartouche.element.trim() === '' ? t.note.element : cartouche.element,
       date: cartouche.date,

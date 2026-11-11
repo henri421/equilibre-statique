@@ -14,6 +14,7 @@ import { schema } from '../../app/src/dessin';
 import { lignesCsv } from '../../app/src/vue';
 import { HYPOTHESES, noteDuCalcul } from '../../app/src/note';
 import { STYLES_TRACE } from '../../app/src/export';
+import { VERSION_OUTIL } from '../../app/src/version';
 
 const P = profilRecommande();
 const lire = (chemin: string): string => readFileSync(fileURLToPath(new URL(chemin, import.meta.url)), 'utf8');
@@ -34,7 +35,7 @@ const textes = (els: ElementNote[] | undefined) => (els ?? []).flatMap((e) => (e
 
 describe('cartouche', () => {
   it('projet, element, date, norme et outil', () => {
-    expect(note.cartouche).toEqual({ ...CARTOUCHE, norme: 'EN 1990:2002, EN 1997-1:2004', outil: 'équilibre-statique' });
+    expect(note.cartouche).toEqual({ ...CARTOUCHE, version: VERSION_OUTIL, norme: 'EN 1990:2002, EN 1997-1:2004', outil: 'équilibre-statique' });
   });
 
   it('element vide : Équilibre statique', () => {
