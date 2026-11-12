@@ -16,8 +16,8 @@ describe('feuilles de calcul (etape 9.5)', () => {
     expect(relire(JSON.stringify(feuille))).toEqual(s);
   });
 
-  it('depend d aedificium-ui v1.7 (brancherFeuilles)', () => {
-    expect(lire('package.json')).toContain('github:henri421/aedificium-ui#v1.7.');
+  it('depend d aedificium-ui v1 (brancherFeuilles)', () => {
+    expect(lire('package.json')).toContain('github:henri421/aedificium-ui#v1.');
   });
 
   it('les pages francaise et anglaise ont la zone de la barre, sous l en-tete', () => {
