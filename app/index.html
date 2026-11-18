@@ -26,8 +26,8 @@
         renversement (EQU), glissement, soulèvement (UPL) et position de la résultante sur la base.
       </p>
       <p class="avertissement">
-        Coefficients recommandés de l'EN 1990 et de l'EN 1997-1 ; l'annexe nationale peut les modifier. Seul
-        l'équilibre est vérifié : ni portance du sol, ni résistance des éléments.
+        Coefficients de l'EN 1990 et de l'EN 1997-1 de l'annexe nationale choisie (valeurs recommandées ou
+        Luxembourg), modifiables. Seul l'équilibre est vérifié : ni portance du sol, ni résistance des éléments.
       </p>
     </header>
 
@@ -58,6 +58,28 @@
             <label><span>x<sub>g</sub>, arête gauche (m)</span><input type="text" inputmode="decimal" data-fixe="xg" /></label>
             <label><span>x<sub>d</sub>, arête droite (m)</span><input type="text" inputmode="decimal" data-fixe="xd" /></label>
             <label><span>z<sub>b</sub>, cote de la base (m)</span><input type="text" inputmode="decimal" data-fixe="zb" /></label>
+          </fieldset>
+
+          <fieldset>
+            <legend>Annexe nationale et coefficients</legend>
+            <p class="note">
+              Les coefficients sont préremplis par l'annexe choisie. Chacun reste modifiable : une valeur changée est
+              marquée « valeur imposée par l’utilisateur » dans la note.
+            </p>
+            <label><span>Annexe nationale</span><select data-role="annexe"></select></label>
+            <p class="avertissement" data-role="bandeau-annexe" hidden></p>
+            <label class="mini"><span>&gamma;<sub>G,dst</sub>, renversement (tableau A1.2(A))</span><input type="text" inputmode="decimal" data-coef="equ.gG_dst" /></label>
+            <label class="mini"><span>&gamma;<sub>G,stb</sub>, renversement (tableau A1.2(A))</span><input type="text" inputmode="decimal" data-coef="equ.gG_stb" /></label>
+            <label class="mini"><span>&gamma;<sub>Q,dst</sub>, renversement (tableau A1.2(A))</span><input type="text" inputmode="decimal" data-coef="equ.gQ_dst" /></label>
+            <label class="mini"><span>&gamma;<sub>Q,stb</sub>, renversement (tableau A1.2(A))</span><input type="text" inputmode="decimal" data-coef="equ.gQ_stb" /></label>
+            <label class="mini"><span>&gamma;<sub>G,dst</sub>, glissement (tableau A1.2(B))</span><input type="text" inputmode="decimal" data-coef="glissement.gG_dst" /></label>
+            <label class="mini"><span>&gamma;<sub>G,stb</sub>, glissement (tableau A1.2(B))</span><input type="text" inputmode="decimal" data-coef="glissement.gG_stb" /></label>
+            <label class="mini"><span>&gamma;<sub>Q,dst</sub>, glissement (tableau A1.2(B))</span><input type="text" inputmode="decimal" data-coef="glissement.gQ_dst" /></label>
+            <label class="mini"><span>&gamma;<sub>Q,stb</sub>, glissement (tableau A1.2(B))</span><input type="text" inputmode="decimal" data-coef="glissement.gQ_stb" /></label>
+            <label class="mini"><span>&gamma;<sub>G,dst</sub>, soulèvement (EN 1997-1, tableau A.15)</span><input type="text" inputmode="decimal" data-coef="upl.gG_dst" /></label>
+            <label class="mini"><span>&gamma;<sub>G,stb</sub>, soulèvement (EN 1997-1, tableau A.15)</span><input type="text" inputmode="decimal" data-coef="upl.gG_stb" /></label>
+            <label class="mini"><span>&gamma;<sub>Q,dst</sub>, soulèvement (EN 1997-1, tableau A.15)</span><input type="text" inputmode="decimal" data-coef="upl.gQ_dst" /></label>
+            <label class="mini"><span>&gamma;<sub>Q,stb</sub>, soulèvement (EN 1997-1, tableau A.15)</span><input type="text" inputmode="decimal" data-coef="upl.gQ_stb" /></label>
           </fieldset>
 
           <fieldset>

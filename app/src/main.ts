@@ -7,14 +7,17 @@
 
 import {
   annuler as annulerHistorique,
+  avertissementAnnexeLu,
   brancherEditeur,
   brancherFeuilles,
   definirLangue,
   langueDuDocument,
   historique,
+  lireAnnexe,
   noteDeCalculHtml,
   notationHtml,
   notationTexte,
+  optionsAnnexe,
   ouvrirOuTelecharger,
   pousser,
   retablir as retablirHistorique,
@@ -25,7 +28,8 @@ import {
   type Json,
   type Vue,
 } from 'aedificium-ui';
-import { profilRecommande, verifierEquilibre, type DonneesEquilibre, type ResultatEquilibre } from '../../src/index';
+import { verifierEquilibre, type DonneesEquilibre, type ProfilEquilibre, type ResultatEquilibre } from '../../src/index';
+import { coefsDeLAnnexe } from './annexe';
 import { EXEMPLES, charge, exemple, lireSaisie, relire, saisieParDefaut, serialiser, type Saisie, type TypeCharge } from './modele';
 import { messageDErreur, rendreResultat, tableauProfil, verdictsHtml } from './vue';
 import { OPTIONS_EDITION, dessinSaisie, vueDeSaisie } from './dessin';
@@ -50,7 +54,6 @@ import './style.css';
 
 definirLangue(langueDuDocument(document));
 
-const PROFIL = profilRecommande();
 const CLE_STOCKAGE = 'equilibre-statique/saisie';
 const CLE_CARTOUCHE = 'equilibre-statique:cartouche';
 const LARGEUR = 640;
@@ -80,6 +83,9 @@ const zones = {
   verdicts: exige<HTMLElement>('[data-role="liste-verdicts"]'),
 } as const;
 const selecteurExemple = exige<HTMLSelectElement>('[data-role="exemple"]');
+const selecteurAnnexe = exige<HTMLSelectElement>('[data-role="annexe"]');
+const bandeauAnnexe = exige<HTMLElement>('[data-role="bandeau-annexe"]');
+const champsCoefs = [...formulaire.querySelectorAll<HTMLInputElement>('[data-coef]')];
 const champProjet = exige<HTMLInputElement>('[data-role="projet"]');
 const champElement = exige<HTMLInputElement>('[data-role="element"]');
 
@@ -145,9 +151,24 @@ let barre: BarreFeuilles | null = null;
 let outil: OutilEquilibre = 'selection';
 const options = { grille: true, cotes: false, resultante: true };
 let survol: EtatEdition['enCours'] = null;
-let dernier: { donnees: DonneesEquilibre; resultat: ResultatEquilibre; svg: string } | null = null;
+let dernier: { donnees: DonneesEquilibre; profil: ProfilEquilibre; annexe: Saisie['annexe']; resultat: ResultatEquilibre; svg: string } | null = null;
 
 // --- Rendu -----------------------------------------------------------------------
+
+/** Champs de l'annexe : le choix, les coefficients, et le bandeau luxembourgeois. */
+function ecrireChampsAnnexe(): void {
+  selecteurAnnexe.value = hist.present.annexe;
+  for (const el of champsCoefs) {
+    const cle = el.dataset.coef as keyof Saisie['coefs'];
+    el.value = hist.present.coefs[cle];
+  }
+}
+
+function afficherBandeauAnnexe(): void {
+  const texte = hist.present.annexe === 'lu' ? avertissementAnnexeLu() : '';
+  bandeauAnnexe.hidden = texte === '';
+  bandeauAnnexe.textContent = texte;
+}
 
 function afficherSegments(): void {
   zones.segments.innerHTML = tableSegmentsHtml(hist.present, etat.choix);
@@ -207,7 +228,7 @@ function recalculer(): void {
   }
   let resultat: ResultatEquilibre;
   try {
-    resultat = verifierEquilibre(l.donnees, PROFIL);
+    resultat = verifierEquilibre(l.donnees, l.profil);
   } catch (e) {
     dernier = null;
     montrerErreur(messageDErreur(e));
@@ -218,10 +239,11 @@ function recalculer(): void {
   }
   montrerErreur(null);
   const svg = dessinCourant(resultat);
-  dernier = { donnees: l.donnees, resultat, svg };
+  dernier = { donnees: l.donnees, profil: l.profil, annexe: hist.present.annexe, resultat, svg };
   zones.zone.innerHTML = svg;
   zones.resultat.innerHTML = rendreResultat(resultat);
   zones.verdicts.innerHTML = verdictsHtml(resultat);
+  zones.profil.innerHTML = tableauProfil(l.profil);
 }
 
 function redessinerSvg(): void {
@@ -235,6 +257,8 @@ function toutRedessiner(): void {
   afficherCharges();
   afficherElementChoisi();
   ecrireChampsFixes();
+  ecrireChampsAnnexe();
+  afficherBandeauAnnexe();
   recalculer();
 }
 
@@ -383,11 +407,16 @@ function traiterBouton(c: HTMLElement, action: string): void {
     ouvrirOuTelecharger(
       'equilibre-note.html',
       noteDeCalculHtml(
-        noteDuCalcul(PROFIL, dernier.donnees, {
-          projet: champProjet.value,
-          element: champElement.value,
-          date: new Date().toISOString().slice(0, 10),
-        }),
+        noteDuCalcul(
+          dernier.profil,
+          dernier.donnees,
+          {
+            projet: champProjet.value,
+            element: champElement.value,
+            date: new Date().toISOString().slice(0, 10),
+          },
+          dernier.annexe
+        ),
         STYLES_TRACE
       )
     );
@@ -412,6 +441,10 @@ document.addEventListener('click', (ev) => {
 formulaire.addEventListener('change', (ev) => {
   const c = ev.target;
   if (!(c instanceof HTMLInputElement || c instanceof HTMLSelectElement)) return;
+  // Changer d'annexe reprend ses coefficients ; chacun reste modifiable ensuite.
+  if (c === selecteurAnnexe) return adopter({ ...hist.present, annexe: lireAnnexe(c.value), coefs: coefsDeLAnnexe(lireAnnexe(c.value)) });
+  const coef = c.dataset.coef;
+  if (coef !== undefined) return adopter({ ...hist.present, coefs: { ...hist.present.coefs, [coef]: c.value } });
   const fixe = c.dataset.fixe;
   if (fixe !== undefined) {
     return adopter(modifierChamp(hist.present, 'fixe', 0, fixe, c.value));
@@ -482,7 +515,7 @@ exige<HTMLInputElement>('[data-role="ouvrir"]').addEventListener('change', async
 // Styles du trace dans la page, comme le reste de la suite.
 document.head.insertAdjacentHTML('beforeend', `<style>${STYLES_TRACE}</style>`);
 
-zones.profil.innerHTML = tableauProfil(PROFIL);
+selecteurAnnexe.innerHTML = optionsAnnexe(hist.present.annexe);
 zones.hypotheses.innerHTML = textes().note.hypotheses.map((h) => `<li>${notationHtml(h)}</li>`).join('');
 
 barre = brancherFeuilles({

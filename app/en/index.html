@@ -26,8 +26,8 @@
         overturning (EQU), sliding, uplift (UPL) and position of the resultant on the base.
       </p>
       <p class="avertissement">
-        Recommended factors of EN 1990 and EN 1997-1; the National Annex may modify them. Only equilibrium is
-        verified: neither the bearing resistance of the ground nor the resistance of the members.
+        Factors of EN 1990 and EN 1997-1 of the chosen National Annex (recommended values or Luxembourg), editable.
+        Only equilibrium is verified: neither the bearing resistance of the ground nor the resistance of the members.
       </p>
     </header>
 
@@ -58,6 +58,28 @@
             <label><span>x<sub>g</sub>, left edge (m)</span><input type="text" inputmode="decimal" data-fixe="xg" /></label>
             <label><span>x<sub>d</sub>, right edge (m)</span><input type="text" inputmode="decimal" data-fixe="xd" /></label>
             <label><span>z<sub>b</sub>, level of the base (m)</span><input type="text" inputmode="decimal" data-fixe="zb" /></label>
+          </fieldset>
+
+          <fieldset>
+            <legend>National Annex and factors</legend>
+            <p class="note">
+              The factors are pre-filled by the chosen National Annex. Each one stays editable: a changed value is marked
+              “value imposed by the user” in the note.
+            </p>
+            <label><span>National Annex</span><select data-role="annexe"></select></label>
+            <p class="avertissement" data-role="bandeau-annexe" hidden></p>
+            <label class="mini"><span>&gamma;<sub>G,dst</sub>, overturning (Table A1.2(A))</span><input type="text" inputmode="decimal" data-coef="equ.gG_dst" /></label>
+            <label class="mini"><span>&gamma;<sub>G,stb</sub>, overturning (Table A1.2(A))</span><input type="text" inputmode="decimal" data-coef="equ.gG_stb" /></label>
+            <label class="mini"><span>&gamma;<sub>Q,dst</sub>, overturning (Table A1.2(A))</span><input type="text" inputmode="decimal" data-coef="equ.gQ_dst" /></label>
+            <label class="mini"><span>&gamma;<sub>Q,stb</sub>, overturning (Table A1.2(A))</span><input type="text" inputmode="decimal" data-coef="equ.gQ_stb" /></label>
+            <label class="mini"><span>&gamma;<sub>G,dst</sub>, sliding (Table A1.2(B))</span><input type="text" inputmode="decimal" data-coef="glissement.gG_dst" /></label>
+            <label class="mini"><span>&gamma;<sub>G,stb</sub>, sliding (Table A1.2(B))</span><input type="text" inputmode="decimal" data-coef="glissement.gG_stb" /></label>
+            <label class="mini"><span>&gamma;<sub>Q,dst</sub>, sliding (Table A1.2(B))</span><input type="text" inputmode="decimal" data-coef="glissement.gQ_dst" /></label>
+            <label class="mini"><span>&gamma;<sub>Q,stb</sub>, sliding (Table A1.2(B))</span><input type="text" inputmode="decimal" data-coef="glissement.gQ_stb" /></label>
+            <label class="mini"><span>&gamma;<sub>G,dst</sub>, uplift (EN 1997-1, Table A.15)</span><input type="text" inputmode="decimal" data-coef="upl.gG_dst" /></label>
+            <label class="mini"><span>&gamma;<sub>G,stb</sub>, uplift (EN 1997-1, Table A.15)</span><input type="text" inputmode="decimal" data-coef="upl.gG_stb" /></label>
+            <label class="mini"><span>&gamma;<sub>Q,dst</sub>, uplift (EN 1997-1, Table A.15)</span><input type="text" inputmode="decimal" data-coef="upl.gQ_dst" /></label>
+            <label class="mini"><span>&gamma;<sub>Q,stb</sub>, uplift (EN 1997-1, Table A.15)</span><input type="text" inputmode="decimal" data-coef="upl.gQ_stb" /></label>
           </fieldset>
 
           <fieldset>

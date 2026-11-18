@@ -6,8 +6,18 @@
  * les memes grandeurs que l'ecran et le CSV, en cellules de texte.
  */
 
-import { nombreAffiche, tauxAffiche, type ElementNote, type NoteDeCalcul, type VerificationNote } from 'aedificium-ui';
+import {
+  avertissementAnnexeLu,
+  libelleAnnexe,
+  nombreAffiche,
+  tauxAffiche,
+  type AnnexeNationale,
+  type ElementNote,
+  type NoteDeCalcul,
+  type VerificationNote,
+} from 'aedificium-ui';
 import { verifierEquilibre, type DonneesEquilibre, type ProfilEquilibre, type Renversement, type ResultatEquilibre } from '../../src/index';
+import { COEFS, libelleCoef, symboleCoef, valeurDuProfil } from './annexe';
 import { schema } from './dessin';
 import { descriptionCharge, sens, texteExcentricite } from './vue';
 import { phrase, textes } from './textes';
@@ -55,6 +65,26 @@ export function tableauCoefficients(p: ProfilEquilibre): ElementNote {
     lignes: [ligne(t.verifications.renversementEqu, p.equ), ligne(t.verifications.glissement, p.glissement), ligne(t.verifications.soulevementUpl, p.upl)],
   };
 }
+
+/**
+ * Les douze coefficients de l'annexe retenue, un par ligne : libelle, symbole, valeur et
+ * source. Une valeur changee par l'utilisateur porte « valeur imposee » dans sa source.
+ */
+export function tableauAnnexe(p: ProfilEquilibre, a: AnnexeNationale): ElementNote {
+  const t = textes();
+  return {
+    type: 'tableau',
+    titre: `${t.note.annexe} : ${libelleAnnexe(a)}`,
+    entetes: [t.entetes.coefficient, t.entetes.symbole, t.entetes.valeur, t.entetes.source],
+    lignes: COEFS.map((c) => {
+      const v = valeurDuProfil(p, c);
+      return [libelleCoef(c), symboleCoef(c), f(v.valeur, 3), phrase(v.source)];
+    }),
+  };
+}
+
+/** Normes du cartouche quand l'annexe luxembourgeoise est retenue. */
+const NORMES_LU = 'ILNAS-EN 1990/AN-LU:2020, ILNAS-EN 1997-1/AN-LU:2020';
 
 /** Synthese des verifications, comme a l'ecran. */
 export function tableauSyntheseNote(r: ResultatEquilibre): ElementNote {
@@ -109,16 +139,22 @@ export function verificationsDeLaNote(r: ResultatEquilibre): VerificationNote[] 
 }
 
 /** Note du calcul des donnees `d`. Leve si le calcul est impossible, comme `verifierEquilibre`. */
-export function noteDuCalcul(profil: ProfilEquilibre, d: DonneesEquilibre, cartouche: { projet: string; element: string; date: string }): NoteDeCalcul {
+export function noteDuCalcul(
+  profil: ProfilEquilibre,
+  d: DonneesEquilibre,
+  cartouche: { projet: string; element: string; date: string },
+  annexe: AnnexeNationale = 'recommande'
+): NoteDeCalcul {
   const r = verifierEquilibre(d, profil);
   const t = textes();
+  const lu = annexe === 'lu';
   return {
     cartouche: {
       version: VERSION_OUTIL,
       projet: cartouche.projet,
       element: cartouche.element.trim() === '' ? t.note.element : cartouche.element,
       date: cartouche.date,
-      norme: 'EN 1990:2002, EN 1997-1:2004',
+      norme: lu ? `EN 1990:2002, EN 1997-1:2004, ${NORMES_LU}` : 'EN 1990:2002, EN 1997-1:2004',
       outil: t.note.outil,
     },
     sections: {
@@ -130,6 +166,7 @@ export function noteDuCalcul(profil: ProfilEquilibre, d: DonneesEquilibre, carto
       hypotheses: [
         { type: 'texte', texte: t.note.profil(phrase(profil.nom), profil.date) },
         tableauCoefficients(profil),
+        tableauAnnexe(profil, annexe),
         { type: 'texte', texte: t.note.frottement(f(d.mu, 3)) },
         { type: 'liste', items: t.note.hypotheses },
       ],
@@ -142,5 +179,7 @@ export function noteDuCalcul(profil: ProfilEquilibre, d: DonneesEquilibre, carto
       ],
     },
     verifications: verificationsDeLaNote(r),
+    // En tete de la note tant que l'annexe luxembourgeoise n'est pas verifiee.
+    avertissements: lu ? [avertissementAnnexeLu()].filter((a) => a !== '') : [],
   };
 }

@@ -2,8 +2,9 @@
  * La saisie (chaines) et sa lecture en donnees du noyau. PUR, sans DOM.
  */
 
-import { langueCourante, lireNombre } from 'aedificium-ui';
-import type { Charge, DonneesEquilibre, NatureAction, Segment } from '../../src/index';
+import { langueCourante, lireAnnexe, lireNombre, type AnnexeNationale } from 'aedificium-ui';
+import type { Charge, DonneesEquilibre, NatureAction, ProfilEquilibre, Segment } from '../../src/index';
+import { COEFS, coefsDeLAnnexe, libelleCoef, profilDeCalcul, symboleCoef, type Coefs, type ValeursCoefs } from './annexe';
 import { textes } from './textes';
 
 export interface LigneSegment {
@@ -47,6 +48,10 @@ export interface Saisie {
   zb: string;
   mu: string;
   profondeur: string;
+  /** Annexe nationale choisie (lot E). */
+  annexe: AnnexeNationale;
+  /** Coefficients de l'annexe, prerempli par elle et modifiables un par un. */
+  coefs: Coefs;
 }
 
 export function charge(partiel: Partial<LigneCharge> & { type: TypeCharge; id: string }): LigneCharge {
@@ -65,6 +70,8 @@ export const EXEMPLES: Record<string, { libelle: string; saisie: Saisie }> = {
       zb: '0',
       mu: '0,5',
       profondeur: '1',
+      annexe: 'recommande',
+      coefs: coefsDeLAnnexe('recommande'),
     },
   },
   'mur-en-l': {
@@ -84,6 +91,8 @@ export const EXEMPLES: Record<string, { libelle: string; saisie: Saisie }> = {
       zb: '0',
       mu: '0,5',
       profondeur: '1',
+      annexe: 'recommande',
+      coefs: coefsDeLAnnexe('recommande'),
     },
   },
 };
@@ -114,6 +123,8 @@ export function exemple(cle: string): { libelle: string; saisie: Saisie } | unde
       zb: nombre(saisie.zb),
       mu: nombre(saisie.mu),
       profondeur: nombre(saisie.profondeur),
+      annexe: saisie.annexe,
+      coefs: Object.fromEntries(Object.entries(saisie.coefs).map(([k, v]) => [k, nombre(v)])) as Coefs,
     },
   };
 }
@@ -122,7 +133,7 @@ export function saisieParDefaut(): Saisie {
   return (exemple('mur-poids') as { saisie: Saisie }).saisie;
 }
 
-export type Lecture = { ok: true; donnees: DonneesEquilibre } | { ok: false; message: string };
+export type Lecture = { ok: true; donnees: DonneesEquilibre; profil: ProfilEquilibre } | { ok: false; message: string };
 
 function n(v: string, quoi: string): number {
   const x = lireNombre(v);
@@ -132,6 +143,8 @@ function n(v: string, quoi: string): number {
 
 export function lireSaisie(s: Saisie): Lecture {
   try {
+    const valeurs = Object.fromEntries(COEFS.map((c) => [c, n(s.coefs[c], `${symboleCoef(c)} (${libelleCoef(c)})`)])) as ValeursCoefs;
+    const profil = profilDeCalcul(s.annexe, valeurs);
     const segments: Segment[] = s.segments.map((l, i) => {
       const id = l.id.trim() || `S${i + 1}`;
       return { id, x1: n(l.x1, `${id}, x1`), z1: n(l.z1, `${id}, z1`), x2: n(l.x2, `${id}, x2`), z2: n(l.z2, `${id}, z2`), e: n(l.e, `${id}, e`), gamma: n(l.gamma, `${id}, gamma`) };
@@ -162,6 +175,7 @@ export function lireSaisie(s: Saisie): Lecture {
         mu: n(s.mu, 'mu_d'),
         profondeur: n(s.profondeur, textes().messages.profondeur),
       },
+      profil,
     };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : String(e) };
@@ -195,5 +209,15 @@ export function relire(texte: string): Saisie {
     zb: t(brut.zb, d.zb),
     mu: t(brut.mu, d.mu),
     profondeur: t(brut.profondeur, d.profondeur),
+    // Un fichier sans annexe ni coefficients (avant le lot E) se relit avec les valeurs recommandees.
+    annexe: lireAnnexe(brut.annexe),
+    coefs: coefsALire(brut.coefs, lireAnnexe(brut.annexe)),
   };
+}
+
+/** Coefficients lus d'un fichier ; un coefficient absent prend la valeur de l'annexe. */
+function coefsALire(brut: unknown, annexe: AnnexeNationale): Coefs {
+  const lus = typeof brut === 'object' && brut !== null ? (brut as Record<string, unknown>) : {};
+  const defauts = coefsDeLAnnexe(annexe);
+  return Object.fromEntries(COEFS.map((c) => [c, typeof lus[c] === 'string' ? (lus[c] as string) : defauts[c]])) as Coefs;
 }

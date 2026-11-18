@@ -11,7 +11,7 @@
  * `phrase()` AU MOMENT DU RENDU, apres `definirLangue` (main.ts).
  */
 
-import { langueCourante, traducteur } from 'aedificium-ui';
+import { langueCourante, traduireSource, traducteur } from 'aedificium-ui';
 
 type Pivot = 'gauche' | 'droite';
 type TypeCharge = 'ponctuelle' | 'lineaire' | 'moment';
@@ -59,6 +59,9 @@ const FR = {
     source: 'Source',
     axe: 'Axe (m)',
     description: 'Description',
+    coefficient: 'Coefficient',
+    symbole: 'Symbole',
+    valeur: 'Valeur',
   },
   somme: 'Somme',
   tauxSomme: 'Taux = somme déstabilisante / somme stabilisante',
@@ -100,7 +103,8 @@ const FR = {
     renversementLigne: (p: Pivot, x: string) => `Renversement autour de l'arête ${p} (x = ${x} m)`,
     base: (xg: string, xd: string, z: string, prof: string) => `Base de x = ${xg} à ${xd} m, z = ${z} m ; profondeur prise en compte ${prof} m.`,
     legende: "Schéma de l'élément, des charges et de la résultante",
-    profil: (nom: string, date: string) => `Profil normatif : ${nom}, données consultées le ${date}. L'annexe nationale peut modifier ces valeurs.`,
+    profil: (nom: string, date: string) => `Profil normatif : ${nom}, données consultées le ${date}.`,
+    annexe: 'Annexe nationale et coefficients',
     frottement: (mu: string) => `Frottement de calcul à la base : mu_d = ${mu}.`,
   },
   form: {
@@ -116,7 +120,17 @@ const FR = {
     retirer: 'retirer',
   },
   dessin: { schema: "schéma de l'élément" },
+  coefficients: {
+    groupes: { equ: 'renversement (EQU)', glissement: 'glissement (STR/GEO)', upl: 'soulèvement (UPL)' } as Record<string, string>,
+    actions: {
+      gG_dst: 'action permanente défavorable',
+      gG_stb: 'action permanente favorable',
+      gQ_dst: 'action variable défavorable',
+      gQ_stb: 'action variable favorable',
+    } as Record<string, string>,
+  },
   messages: {
+    imposee: (valeur: string, source: string) => `valeur imposée par l’utilisateur (profil : ${valeur}, ${source})`,
     aimante: (noeud: string) => `aimanté sur ${noeud}`,
     rienAExporter: 'Aucun calcul valide à exporter : corriger la saisie.',
     exemple: '— exemple —',
@@ -175,6 +189,9 @@ const EN: Textes = {
     source: 'Source',
     axe: 'Axis (m)',
     description: 'Description',
+    coefficient: 'Factor',
+    symbole: 'Symbol',
+    valeur: 'Value',
   },
   somme: 'Sum',
   tauxSomme: 'Ratio = destabilising sum / stabilising sum',
@@ -215,7 +232,8 @@ const EN: Textes = {
     renversementLigne: (p, x) => `Overturning about the ${p === 'gauche' ? 'left' : 'right'} edge (x = ${x} m)`,
     base: (xg, xd, z, prof) => `Base from x = ${xg} to ${xd} m, z = ${z} m; depth taken into account ${prof} m.`,
     legende: 'Diagram of the element, the loads and the resultant',
-    profil: (nom, date) => `Code profile: ${nom}, data checked on ${date}. The National Annex may modify these values.`,
+    profil: (nom, date) => `Code profile: ${nom}, data checked on ${date}.`,
+    annexe: 'National Annex and factors',
     frottement: (mu) => `Design friction at the base: mu_d = ${mu}.`,
   },
   form: {
@@ -230,7 +248,17 @@ const EN: Textes = {
     retirer: 'remove',
   },
   dessin: { schema: 'diagram of the element' },
+  coefficients: {
+    groupes: { equ: 'overturning (EQU)', glissement: 'sliding (STR/GEO)', upl: 'uplift (UPL)' },
+    actions: {
+      gG_dst: 'permanent unfavourable action',
+      gG_stb: 'permanent favourable action',
+      gQ_dst: 'variable unfavourable action',
+      gQ_stb: 'variable favourable action',
+    },
+  },
   messages: {
+    imposee: (valeur, source) => `value imposed by the user (profile: ${valeur}, ${phrase(source)})`,
     aimante: (noeud) => `snapped to ${noeud}`,
     rienAExporter: 'No valid calculation to export: correct the input.',
     exemple: '— example —',
@@ -266,6 +294,11 @@ function grandeurEn(nom: string): string {
     .replace(' : ', ': ');
 }
 
+/** Source luxembourgeoise en anglais : la mention « action variable favorable » d'abord, le reste par `traduireSource`. */
+function sourceLuEn(source: string): string {
+  return traduireSource(source.replace('action variable favorable : 0', 'favourable variable action: 0'));
+}
+
 const EXACTES: Record<string, string> = {
   'EN 1990:2002 et EN 1997-1:2004, valeurs recommandées': 'EN 1990:2002 and EN 1997-1:2004, recommended values',
   'La base doit avoir x_d > x_g (m).': 'The base must have x_d > x_g (m).',
@@ -293,4 +326,9 @@ export const phrase = traducteur(EXACTES, [
   [/^(.+) doit être un nombre strictement positif \((.+)\)\.$/, (_t, nom: string, u: string) => `${grandeurEn(nom)} must be a strictly positive number (${u}).`],
   [/^(.+) doit être un nombre \((.+)\)\.$/, (_t, nom: string, u: string) => `${grandeurEn(nom)} must be a number (${u}).`],
   [/^Le segment (.+) : poids volumique positif ou nul attendu \(kN\/m3\)\.$/, 'Segment $1: unit weight expected positive or zero (kN/m3).'],
+  [/^ILNAS-.+$/, (source: string) => sourceLuEn(source)],
+  [
+    /^Luxembourg, (.+) : valeurs présumées, à vérifier$/,
+    (_t, reste: string) => `Luxembourg, ${reste.replace(' et ', ' and ')}: presumed values, to be checked`,
+  ],
 ]);
