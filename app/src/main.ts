@@ -15,6 +15,7 @@ import {
   historique,
   lireAnnexe,
   noteDeCalculHtml,
+  telechargerNotePdf,
   notationHtml,
   notationTexte,
   optionsAnnexe,
@@ -403,23 +404,20 @@ function traiterBouton(c: HTMLElement, action: string): void {
   if (dernier === null) return montrerErreur(textes().messages.rienAExporter);
   if (action === 'exporter-schema') telecharger('equilibre-schema.svg', svgAutonome(dernier.svg, STYLES_TRACE), 'image/svg+xml;charset=utf-8');
   else if (action === 'exporter-csv') telecharger('equilibre-resultats.csv', resultatEnCsv(dernier.resultat), 'text/csv;charset=utf-8');
-  else if (action === 'exporter-note') {
-    ouvrirOuTelecharger(
-      'equilibre-note.html',
-      noteDeCalculHtml(
-        noteDuCalcul(
-          dernier.profil,
-          dernier.donnees,
-          {
-            projet: champProjet.value,
-            element: champElement.value,
-            date: new Date().toISOString().slice(0, 10),
-          },
-          dernier.annexe
-        ),
-        STYLES_TRACE
-      )
+  else if (action === 'exporter-note' || action === 'exporter-note-pdf') {
+    const noteCalc = noteDuCalcul(
+      dernier.profil,
+      dernier.donnees,
+      {
+        projet: champProjet.value,
+        element: champElement.value,
+        date: new Date().toISOString().slice(0, 10),
+      },
+      dernier.annexe
     );
+    // PDF construit au clic ; en cas d'echec, la note HTML prend le relais.
+    if (action === 'exporter-note-pdf') void telechargerNotePdf('equilibre-note.pdf', noteCalc, STYLES_TRACE).catch(() => ouvrirOuTelecharger('equilibre-note.html', noteDeCalculHtml(noteCalc, STYLES_TRACE)));
+    else ouvrirOuTelecharger('equilibre-note.html', noteDeCalculHtml(noteCalc, STYLES_TRACE));
   }
 }
 
